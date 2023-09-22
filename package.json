@@ -10,7 +10,8 @@
     "clean": "rm -rf dist/",
     "prepublishOnly": "tsc",
     "lint-staged": "lint-staged",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "add-song": "ts-node src/utils/addSong.ts"
   },
   "keywords": [],
   "author": "",
@@ -24,6 +25,8 @@
   "devDependencies": {
     "@types/node": "^20.6.3",
     "@types/node-telegram-bot-api": "^0.61.7",
+    "@types/opencc-js": "^1.0.1",
+    "@types/prompts": "^2.4.4",
     "@typescript-eslint/eslint-plugin": "^6.7.2",
     "@typescript-eslint/parser": "^6.7.2",
     "eslint": "^8.49.0",
@@ -35,7 +38,10 @@
     "typescript": "^5.2.2"
   },
   "dependencies": {
+    "firebase-admin": "^11.10.1",
     "node-telegram-bot-api": "^0.63.0",
+    "opencc-js": "^1.0.5",
+    "prompts": "^2.4.2",
     "winston": "^3.10.0"
   }
 }

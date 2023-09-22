@@ -15,3 +15,9 @@ interface BotMessage {
   date: number;
   text: string;
 }
+
+interface Song {
+  title: string;
+  link: string;
+  tags: string[];
+}
