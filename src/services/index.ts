@@ -1,6 +1,7 @@
 import { logger, toShuffled } from './../lib/index';
 import { initializeApp, cert, type ServiceAccount } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
+import axios from 'axios';
 
 import serviceAccount from './firebase-credentials.json';
 import { Radio } from '../features';
@@ -31,4 +32,23 @@ export function registerObservers() {
 export async function addSong(song: Song) {
   const doc = await db.collection('songs').add(song);
   return doc.id;
+}
+
+export async function getCachedCard(id: number | string) {
+  if (!id) {
+    throw 'No Card ID';
+  }
+
+  const docRef = db.collection('cgss-cards').doc(`${id}`);
+  const doc = await docRef.get();
+  if (doc.exists) {
+    return doc.data();
+  }
+  const res = await axios.get(`http://starlight.kirara.ca/api/v1/card_t/${id}`);
+  const card = res.data?.result?.[0];
+  if (card) {
+    await docRef.set(card);
+    return card;
+  }
+  throw 'Card Not Found';
 }
