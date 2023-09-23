@@ -12,20 +12,20 @@ export default class Radio {
       return randomElement(Radio.Songlist);
     }
 
-    // match title
-    const titleMatched = Radio.Songlist.filter(song =>
-      song.title.match(new RegExp(tag)),
-    );
-    if (titleMatched.length) {
-      return randomElement(titleMatched);
-    }
-
     // match tag
     const tagMatched = Radio.Songlist.filter(song =>
-      song.tags.find(e => e.match(new RegExp(tag))),
+      song.tags.find(e => e.match(new RegExp(tag, 'gi'))),
     );
     if (tagMatched.length) {
       return randomElement(tagMatched);
+    }
+
+    // match title
+    const titleMatched = Radio.Songlist.filter(song =>
+      song.title.match(new RegExp(tag, 'gi')),
+    );
+    if (titleMatched.length) {
+      return randomElement(titleMatched);
     }
 
     return randomElement(Radio.Songlist);
@@ -35,8 +35,8 @@ export default class Radio {
     const now = new Date();
     if (
       !Radio.Reqlist[id] ||
-      (Radio.slowdownEnabled &&
-        slowdownOver(now, Radio.Reqlist[id], Radio.slowdownTime))
+      !Radio.slowdownEnabled ||
+      slowdownOver(now, Radio.Reqlist[id], Radio.slowdownTime)
     ) {
       Radio.Reqlist[id] = now;
       return Radio.pickSong(tag);

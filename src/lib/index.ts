@@ -44,8 +44,8 @@ export function randint(min: number, max: number) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-export function randomElement<T>(arr: T[]) {
-  return arr[randint(0, arr.length)];
+export function randomElement<T>(items: T[]) {
+  return items[Math.floor(Math.random() * items.length)];
 }
 
 export function slowdownOver(
@@ -61,4 +61,27 @@ export function slowdownOver(
 
   // 判断差值是否大于两分钟的毫秒数
   return timeDifference > twoMinutesInMilliseconds;
+}
+
+export function parseArgs(input: string) {
+  const regex =
+    /(?:「[^」]*」|『[^』]*』|《[^》]*》|“[^”]*”|"[^"]*"|'[^']*'|[^ ])+/g;
+
+  // const symbols = [
+  //   ['「', '」'],
+  //   ['『', '』'],
+  //   ['《', '》'],
+  //   ['“', '”'],
+  //   ['"', '"'],
+  //   ["'", "'"],
+  // ];
+  // const regex = new RegExp(
+  //   `(?:${symbols
+  //     .map(([left, right]) => `${left}[^${right}]${right}`)
+  //     .join('|')})+`,
+  //   'g',
+  // );
+  return input
+    .match(regex)
+    ?.map(item => item.trim().replace(/^「|」|『|』|《|》|“|”|"|'$/g, ''));
 }
