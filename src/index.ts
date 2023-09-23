@@ -5,9 +5,10 @@ import {
   pickSticker,
 } from './lib/index';
 import TelegramBot from 'node-telegram-bot-api';
-import { registerObservers } from './services';
+import { getCachedCard, registerObservers } from './services';
 import { Converter } from 'opencc-js';
 import { Radio } from './features';
+import { pickTenCards } from './features/cgss-simple';
 
 registerObservers();
 
@@ -96,8 +97,36 @@ bot.on('message', async msg => {
           return logger.error((error as Error)?.message ?? error);
         }
       }
+
+      if (id && convertCC(args[0]) === '抽卡') {
+        try {
+          const card = await pickTenCards(`${id}`);
+          const { id: cardId, title, name_only, card_image_ref, rarity } = card;
+          await bot.sendPhoto(chatId, card_image_ref, {
+            reply_to_message_id: message_id,
+            caption: `大哥哥抽到了 ${rarity.toLocaleUpperCase()} ${
+              title ? `[${title}]` : ''
+            } ${name_only}`,
+          });
+          return logger.info(
+            `${id} - ${first_name} ${last_name} drawed ${cardId}.`,
+          );
+        } catch (error) {
+          if (error === 'Slowdown') {
+            await bot.sendMessage(chatId, `抽卡请求有60秒冷却时间，请稍候。`);
+          } else {
+            await bot.sendMessage(
+              chatId,
+              (error as Error)?.message ?? '未知错误',
+            );
+          }
+          return logger.error((error as Error)?.message ?? error);
+        }
+      }
     }
 
     await bot.sendSticker(chatId, pickSticker());
   }
 });
+
+getCachedCard(100075);
