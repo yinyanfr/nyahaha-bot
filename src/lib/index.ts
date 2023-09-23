@@ -1,5 +1,6 @@
 import { join } from 'node:path';
 import winston from 'winston';
+import stickers from './miaohaha.json';
 
 export const logger = winston.createLogger({
   level: 'info',
@@ -84,4 +85,33 @@ export function parseArgs(input: string) {
   return input
     .match(regex)
     ?.map(item => item.trim().replace(/^「|」|『|』|《|》|“|”|"|'$/g, ''));
+}
+
+export function pickSticker() {
+  const sticker = randomElement(stickers.stickers);
+  return sticker.file_id;
+}
+
+export function pickLoveConfession(chatId?: number) {
+  const LOVE =
+    'CAACAgQAAx0CXwxTYAACX7tlDwfcMeNvm8FZhx4AAcl3DRHGLH8AAowPAAJch4lSWdH01eDvTbQwBA';
+  const NOT_LOVE = {
+    '😟': 'CAACAgQAAxUAAWUO-BH9WRPSpGVeChebgyRLX0EGAAKEDgACcJOIUtXCApF9Fp3TMAQ',
+    '❔': 'CAACAgQAAxUAAWUO-BE144NexikOgripIjFZjUaxAALmDAAC7peJUrEHq3uhAhZMMAQ',
+    '🙃': 'CAACAgQAAxUAAWUO-BG1HzMaODWBaJ3Qy5ZN-VRaAAInEAACGv2JUtPsDLhNZLttMAQ',
+    '👮': 'CAACAgQAAxUAAWUO-BHY9E-NtN4d_-HhNsl2pxpRAAI2DwACYxSJUvExPRQpskD0MAQ',
+    '🫤': 'CAACAgQAAx0CXwxTYAACX7xlDwfqkyRV-aF9iBxWzz9juV-ESAAChA8AAoGOkVJSGy3WUp15mjAE',
+    '😠': 'CAACAgQAAxUAAWUO-BHjZ80CYTtJ7YPImUI_j-zJAAJbDAACb8yRUiIM8E4h5q4QMAQ',
+    '👊': 'CAACAgQAAxUAAWUO-BH6CGMcy4RcGmAP41qJWpFTAAIpDwACeBWRUlECPcGJGfrkMAQ',
+    '😛': 'CAACAgQAAxUAAWUO-BHgtPRSn5vZnjfwxCHY7zxcAAJ0DwAC0_6IUj27Xt-R1-fZMAQ',
+    '☕️': 'CAACAgQAAxUAAWUO-BEJ1eC272hSQAeiFnHoNW-AAAJJEgACUe2IUq1qnM1GoHzDMAQ',
+    '😯': 'CAACAgQAAxUAAWUO-BGoLq765x-80ckTmVLlSOZKAALuDAACTXmQUsRCGjHpKjUQMAQ',
+  };
+  if (chatId === process.env.TB_BOT_ADMINID) {
+    return LOVE;
+  } else {
+    if (Math.random() > 0.5) {
+      return LOVE;
+    } else return randomElement(Object.values(NOT_LOVE));
+  }
 }
