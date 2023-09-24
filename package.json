@@ -1,6 +1,6 @@
 {
   "name": "nyahaha-bot",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "The code base for a personal bot.",
   "main": "dist/index.js",
   "scripts": {
@@ -45,6 +45,7 @@
     "opencc-js": "^1.0.5",
     "prompts": "^2.4.2",
     "sharp": "^0.32.6",
+    "short-uuid": "^4.2.2",
     "winston": "^3.10.0"
   }
 }

@@ -1,8 +1,14 @@
 /// <reference path="./index.d.ts" />
-
-import { randomElement, slowdownOver } from '../../lib';
-import { getCachedCard, getImageUrl } from '../../services';
+import { createFolder, randomElement, slowdownOver } from '../../lib';
+import {
+  deferredImageBuffers,
+  getCachedCard,
+  getImageUrl,
+} from '../../services';
 import allCards from './card_list.json';
+import joinImages from 'join-images';
+import shortUUID from 'short-uuid';
+import { join } from 'node:path';
 
 interface GroupedCards {
   r: CardInfo[];
@@ -48,25 +54,42 @@ export async function pickCard(mustSr?: boolean) {
     id,
     title,
     name_only,
-    card_image_ref: await getImageUrl(
-      card_image_ref,
-      `cgss-cards/${id}/card.png`,
-    ),
-    icon_image_ref: await getImageUrl(
-      icon_image_ref,
-      `cgss-cards/${id}/icon.png`,
-    ),
+    card_image_ref:
+      rarity === 'r'
+        ? null
+        : await getImageUrl(card_image_ref, `cgss-cards/${id}/card.png`),
+    icon_image_ref:
+      rarity === 'r'
+        ? null
+        : await getImageUrl(icon_image_ref, `cgss-cards/${id}/icon.png`),
     rarity,
   };
 }
 
 export async function pickTenCards(id: string) {
-  // const requests = new Array(10).fill(1).map((e, i) => pickCard(i === 9))
-  // const worker = await Promise.all(requests)
   const now = new Date();
   if (!Reqlist[id] || slowdownOver(now, Reqlist[id], 60 * 1000)) {
     Reqlist[id] = now;
-    return await pickCard(true);
+    const requests = new Array(10).fill(1).map((e, i) => pickCard(i === 9));
+    const results = await Promise.all(requests);
+    const cardImageUrls = results
+      .filter(e => e.card_image_ref)
+      .map(e => e.card_image_ref as string);
+    const cardImageBuffers = await deferredImageBuffers(cardImageUrls);
+    const joinedImage = await joinImages(cardImageBuffers, {
+      direction: 'horizontal',
+      align: 'center',
+    });
+
+    // Problem with the API, neither Buffer nor Stream would work, had to write to a file
+    const tmpImageDir = join(__dirname, '../../..', 'tmp');
+    await createFolder(tmpImageDir);
+    const tmpImagePath = join(tmpImageDir, `${shortUUID.generate()}.jpg`);
+    await joinedImage.jpeg().toFile(tmpImagePath);
+    return {
+      results,
+      imageUrl: tmpImagePath,
+    };
   } else {
     throw 'Slowdown';
   }

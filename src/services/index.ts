@@ -65,3 +65,11 @@ export async function getImageUrl(link: string, ref: string) {
   }
   return await getDownloadURL(imageRef);
 }
+
+export async function deferredImageBuffers(imageUrls: string[]) {
+  const req = imageUrls.map(url =>
+    axios.get(url, { responseType: 'arraybuffer' }),
+  );
+  const results = await Promise.all(req);
+  return results.map(e => Buffer.from(e.data, 'binary'));
+}

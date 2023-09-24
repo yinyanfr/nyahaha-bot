@@ -100,18 +100,23 @@ bot.on('message', async msg => {
 
       if (id && convertCC(args[0]) === '抽卡') {
         try {
-          const card = await pickTenCards(`${id}`);
-          const { id: cardId, title, name_only, card_image_ref, rarity } = card;
-          await bot.sendPhoto(chatId, card_image_ref, {
+          const result = await pickTenCards(`${id}`);
+          const { results, imageUrl } = result;
+          const cardList = results.map(
+            ({ rarity, title, name_only }) =>
+              `${rarity.toLocaleUpperCase()} ${
+                title ? `[${title}]` : ''
+              } ${name_only}`,
+          );
+          await bot.sendPhoto(chatId, imageUrl, {
             reply_to_message_id: message_id,
-            caption: `大哥哥抽到了 ${rarity.toLocaleUpperCase()} ${
-              title ? `[${title}]` : ''
-            } ${name_only}`,
+            caption: `大哥哥抽到了：\n${cardList.join('\n')}`,
           });
           return logger.info(
-            `${id} - ${first_name} ${last_name} drawed ${cardId}.`,
+            `${id} - ${first_name} ${last_name ?? ''} drawed 10 cards.`,
           );
         } catch (error) {
+          console.error(error);
           if (error === 'Slowdown') {
             await bot.sendMessage(chatId, `抽卡请求有60秒冷却时间，请稍候。`);
           } else {
