@@ -1,5 +1,6 @@
 import { join } from 'node:path';
 import winston from 'winston';
+import { mkdir, stat } from 'node:fs/promises';
 import stickers from './miaohaha.json';
 
 export const logger = winston.createLogger({
@@ -113,5 +114,14 @@ export function pickLoveConfession(chatId?: number) {
     if (Math.random() > 0.5) {
       return LOVE;
     } else return randomElement(Object.values(NOT_LOVE));
+  }
+}
+
+export async function createFolder(folderPath: string) {
+  const folderExists = await stat(folderPath)
+    .then(stats => stats.isDirectory())
+    .catch(() => false);
+  if (!folderExists) {
+    await mkdir(folderPath, { recursive: true });
   }
 }

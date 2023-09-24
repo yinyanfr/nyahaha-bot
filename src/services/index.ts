@@ -1,6 +1,7 @@
 import { logger, toShuffled } from './../lib/index';
 import { initializeApp, cert, type ServiceAccount } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
+import { getDownloadURL, getStorage } from 'firebase-admin/storage';
 import axios from 'axios';
 
 import serviceAccount from './firebase-credentials.json';
@@ -8,9 +9,11 @@ import { Radio } from '../features';
 
 initializeApp({
   credential: cert(serviceAccount as ServiceAccount),
+  storageBucket: 'gs://nyahaha-bot.appspot.com',
 });
 
 const db = getFirestore();
+const bucket = getStorage().bucket();
 
 export function registerObservers() {
   // Songlist Observer
@@ -51,4 +54,22 @@ export async function getCachedCard(id: number | string) {
     return card;
   }
   throw 'Card Not Found';
+}
+
+export async function getImageUrl(link: string, ref: string) {
+  const imageRef = bucket.file(ref);
+  const exist = await imageRef.exists();
+  if (!exist?.[0]) {
+    const imageBuffer = await axios.get(link, { responseType: 'arraybuffer' });
+    await imageRef.save(Buffer.from(imageBuffer.data, 'binary'));
+  }
+  return await getDownloadURL(imageRef);
+}
+
+export async function deferredImageBuffers(imageUrls: string[]) {
+  const req = imageUrls.map(url =>
+    axios.get(url, { responseType: 'arraybuffer' }),
+  );
+  const results = await Promise.all(req);
+  return results.map(e => Buffer.from(e.data, 'binary'));
 }
