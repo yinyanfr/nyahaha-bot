@@ -1,7 +1,7 @@
 /// <reference path="./index.d.ts" />
 
 import { randomElement, slowdownOver } from '../../lib';
-import { getCachedCard } from '../../services';
+import { getCachedCard, getImageUrl } from '../../services';
 import allCards from './card_list.json';
 
 interface GroupedCards {
@@ -48,8 +48,14 @@ export async function pickCard(mustSr?: boolean) {
     id,
     title,
     name_only,
-    card_image_ref,
-    icon_image_ref,
+    card_image_ref: await getImageUrl(
+      card_image_ref,
+      `cgss-cards/${id}/card.png`,
+    ),
+    icon_image_ref: await getImageUrl(
+      icon_image_ref,
+      `cgss-cards/${id}/icon.png`,
+    ),
     rarity,
   };
 }
