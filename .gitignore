@@ -133,3 +133,4 @@ dist
 
 src/services/firebase-credentials.json
 tmp/
+src/configs/index.ts

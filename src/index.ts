@@ -9,12 +9,13 @@ import { getCachedCard, registerObservers } from './services';
 import { Converter } from 'opencc-js';
 import { Radio } from './features';
 import { pickTenCards } from './features/cgss-simple';
+import configs from './configs';
+
+const botToken = configs.token;
 
 registerObservers();
 
 const convertCC = Converter({ from: 'hk', to: 'cn' });
-
-const botToken = process.env.TG_BOT_TOKEN;
 
 if (!botToken) {
   logger.error('No token.');
@@ -29,6 +30,7 @@ logger.info('Bot running.');
 // });
 
 bot.on('message', async msg => {
+  console.log(msg);
   const { id, first_name, last_name } = msg.from ?? {};
   const { id: chatId, type } = msg.chat ?? {};
   const { text = '', message_id } = msg ?? {};
