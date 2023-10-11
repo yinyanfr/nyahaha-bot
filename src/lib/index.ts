@@ -2,6 +2,7 @@ import { join } from 'node:path';
 import winston from 'winston';
 import { mkdir, stat } from 'node:fs/promises';
 import stickers from './miaohaha.json';
+import configs from '../configs';
 
 export const logger = winston.createLogger({
   level: 'info',
@@ -108,7 +109,7 @@ export function pickLoveConfession(chatId?: number) {
     '☕️': 'CAACAgQAAxUAAWUO-BEJ1eC272hSQAeiFnHoNW-AAAJJEgACUe2IUq1qnM1GoHzDMAQ',
     '😯': 'CAACAgQAAxUAAWUO-BGoLq765x-80ckTmVLlSOZKAALuDAACTXmQUsRCGjHpKjUQMAQ',
   };
-  if (chatId === process.env.TB_BOT_ADMINID) {
+  if (`${chatId}` === configs.adminId) {
     return LOVE;
   } else {
     if (Math.random() > 0.5) {
