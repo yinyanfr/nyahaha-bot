@@ -7,9 +7,15 @@ import {
 import TelegramBot from 'node-telegram-bot-api';
 import { getCachedCard, registerObservers } from './services';
 import { Converter } from 'opencc-js';
-import { Radio } from './features';
+import { Radio, getDailyBonus } from './features';
 import { pickTenCards } from './features/cgss-simple';
 import configs from './configs';
+
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+
+dayjs.extend(utc);
+dayjs().utcOffset(8);
 
 const botToken = configs.token;
 
@@ -30,7 +36,7 @@ logger.info('Bot running.');
 // });
 
 bot.on('message', async msg => {
-  console.log(msg);
+  // console.log(msg);
   const { id, first_name, last_name } = msg.from ?? {};
   const { id: chatId, type } = msg.chat ?? {};
   const { text = '', message_id } = msg ?? {};
@@ -127,6 +133,36 @@ bot.on('message', async msg => {
               (error as Error)?.message ?? '未知错误',
             );
           }
+          return logger.error((error as Error)?.message ?? error);
+        }
+      }
+
+      if (id && convertCC(args[0]) === '签到') {
+        try {
+          const bonus = await getDailyBonus(`${id}`);
+          await bot.sendMessage(
+            chatId,
+            `签到成功！大哥哥今天获得了${bonus}块石头！`,
+            {
+              reply_to_message_id: message_id,
+            },
+          );
+          return logger.info(
+            `${id} - ${first_name} ${last_name ?? ''} got daily bonus.`,
+          );
+        } catch (error) {
+          const errorMessage = (error as Error)?.message ?? error ?? '未知错误';
+          let message = errorMessage;
+          if (errorMessage === 'USER_NOT_FOUND') {
+            message = `大哥哥尚未注册，请点击一下链接注册：https://bot.yinyan.fr/login`;
+          }
+          if (errorMessage === 'BONUS_ALREADY_GOT') {
+            message = '大哥哥今天已经签过到了（签到时间以东八区计算日期）';
+          }
+
+          await bot.sendMessage(chatId, message, {
+            reply_to_message_id: message_id,
+          });
           return logger.error((error as Error)?.message ?? error);
         }
       }

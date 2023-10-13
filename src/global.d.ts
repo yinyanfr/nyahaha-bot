@@ -21,3 +21,13 @@ interface Song {
   link: string;
   tags: string[];
 }
+
+interface User {
+  id: string;
+  uid: string;
+}
+
+interface UserData {
+  balance: number;
+  lastBonusDate?: string;
+}

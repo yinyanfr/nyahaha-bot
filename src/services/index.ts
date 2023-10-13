@@ -73,3 +73,29 @@ export async function deferredImageBuffers(imageUrls: string[]) {
   const results = await Promise.all(req);
   return results.map(e => Buffer.from(e.data, 'binary'));
 }
+
+export async function getUserByUid(uid: string) {
+  const userSnaps = await db.collection('users').where('uid', '==', uid).get();
+  if (userSnaps.empty) {
+    throw new Error('USER_NOT_FOUND');
+  }
+  const users: User[] = [];
+  userSnaps.forEach(e => {
+    users.push({ ...(e.data() as User), id: e.id });
+  });
+  return users[0];
+}
+
+export async function getUserData(id: string): Promise<UserData> {
+  const userDataSnap = await db.collection('userdata').doc(id).get();
+  if (userDataSnap.exists) {
+    return userDataSnap.data() as UserData;
+  }
+  const userdata = { balance: 0 };
+  await setUserData(id, userdata);
+  return userdata;
+}
+
+export async function setUserData(id: string, payload: UserData) {
+  await db.collection('userdata').doc(id).set(payload);
+}
