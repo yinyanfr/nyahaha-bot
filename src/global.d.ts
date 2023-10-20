@@ -25,9 +25,16 @@ interface Song {
 interface User {
   id: string;
   uid: string;
+  hash?: string;
+  first_name?: string;
 }
 
 interface UserData {
+  id: string;
+  nickname?: string;
   balance: number;
   lastBonusDate?: string;
+  lastGachaDate?: string;
+  timezone?: string;
+  sleepDate?: string;
 }

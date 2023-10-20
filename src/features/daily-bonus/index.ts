@@ -1,19 +1,18 @@
 import dayjs from 'dayjs';
 import { randint } from '../../lib';
-import { getUserData, getUserByUid, setUserData } from '../../services';
+import { getUserDataByUid, setUserDataByUid } from '../../services';
 
 export async function getDailyBonus(uid: string) {
-  const user = await getUserByUid(uid);
-  const { balance, lastBonusDate } = await getUserData(user.id);
-  const now = dayjs();
+  const { balance, lastBonusDate } = await getUserDataByUid(uid);
+  const now = dayjs().utcOffset(9);
   if (lastBonusDate) {
-    if (now.isSame(dayjs(lastBonusDate), 'day')) {
+    if (now.isSame(dayjs(lastBonusDate).utcOffset(9), 'day')) {
       throw new Error('BONUS_ALREADY_GOT');
     }
   }
   const bonus = randint(5000, 10000);
-  await setUserData(user.id, {
-    balance: balance + bonus,
+  await setUserDataByUid(uid, {
+    balance: (balance ?? 0) + bonus,
     lastBonusDate: now.toISOString(),
   });
   return bonus;

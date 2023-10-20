@@ -109,7 +109,7 @@ export function pickLoveConfession(chatId?: number) {
     '☕️': 'CAACAgQAAxUAAWUO-BEJ1eC272hSQAeiFnHoNW-AAAJJEgACUe2IUq1qnM1GoHzDMAQ',
     '😯': 'CAACAgQAAxUAAWUO-BGoLq765x-80ckTmVLlSOZKAALuDAACTXmQUsRCGjHpKjUQMAQ',
   };
-  if (`${chatId}` === configs.adminId) {
+  if (`${chatId}` === `${configs.adminId}`) {
     return LOVE;
   } else {
     if (Math.random() > 0.5) {
