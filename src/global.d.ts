@@ -38,3 +38,12 @@ interface UserData {
   timezone?: string;
   sleepDate?: string;
 }
+
+interface CGSSGachaResult {
+  id: number;
+  title: string;
+  name_only: string;
+  card_image_ref: string | null;
+  icon_image_ref: string | null;
+  rarity: string;
+}

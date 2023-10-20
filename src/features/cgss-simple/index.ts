@@ -1,5 +1,10 @@
 /// <reference path="./index.d.ts" />
-import { createFolder, randomElement, slowdownOver } from '../../lib';
+import {
+  ERROR_CODE,
+  createFolder,
+  randomElement,
+  slowdownOver,
+} from '../../lib';
 import {
   deferredImageBuffers,
   getCachedCard,
@@ -38,7 +43,7 @@ const grouped = groupCardByRarity(allCards.result as CardInfo[]);
 
 const Reqlist: Record<string, Date> = {};
 
-export async function pickCard(mustSr?: boolean) {
+export async function pickCard(mustSr?: boolean): Promise<CGSSGachaResult> {
   const rand = Math.abs(Math.random());
   let rarity: keyof GroupedCards = mustSr ? 'sr' : 'r';
   if (rand < 0.03) {
@@ -91,6 +96,6 @@ export async function pickTenCards(id: string) {
       imageUrl: tmpImagePath,
     };
   } else {
-    throw 'Slowdown';
+    throw ERROR_CODE.SLOWDOWN;
   }
 }

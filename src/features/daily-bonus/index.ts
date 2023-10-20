@@ -1,5 +1,5 @@
 import dayjs from 'dayjs';
-import { randint } from '../../lib';
+import { ERROR_CODE, randint } from '../../lib';
 import { getUserDataByUid, setUserDataByUid } from '../../services';
 
 export async function getDailyBonus(uid: string) {
@@ -7,7 +7,7 @@ export async function getDailyBonus(uid: string) {
   const now = dayjs().utcOffset(9);
   if (lastBonusDate) {
     if (now.isSame(dayjs(lastBonusDate).utcOffset(9), 'day')) {
-      throw new Error('BONUS_ALREADY_GOT');
+      throw new Error(ERROR_CODE.BONUS_ALREADY_GOT);
     }
   }
   const bonus = randint(5000, 10000);

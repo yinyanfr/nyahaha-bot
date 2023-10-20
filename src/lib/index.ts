@@ -4,6 +4,14 @@ import { mkdir, stat } from 'node:fs/promises';
 import stickers from './miaohaha.json';
 import configs from '../configs';
 
+export enum ERROR_CODE {
+  BONUS_ALREADY_GOT = 'BONUS_ALREADY_GOT',
+  NOT_ENOUGH_STONES = 'NOT_ENOUGH_STONES',
+  USER_NOT_FOUND = 'USER_NOT_FOUND',
+  SLOWDOWN = 'SLOWDOWN',
+  INVALID_USER_ID = 'INVALID_USER_ID',
+}
+
 export const logger = winston.createLogger({
   level: 'info',
   format: winston.format.json(),
