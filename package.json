@@ -1,6 +1,6 @@
 {
   "name": "nyahaha-bot",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "The code base for a personal bot.",
   "main": "dist/index.js",
   "scripts": {

@@ -1,4 +1,4 @@
-import { randomElement, slowdownOver } from '../../lib';
+import { ERROR_CODE, randomElement, slowdownOver } from '../../lib';
 
 export default class Radio {
   static slowdownEnabled = true;
@@ -41,7 +41,7 @@ export default class Radio {
       Radio.Reqlist[id] = now;
       return Radio.pickSong(tag);
     } else {
-      throw 'Slowdown';
+      throw ERROR_CODE.SLOWDOWN;
     }
   }
 }

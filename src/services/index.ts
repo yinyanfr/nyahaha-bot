@@ -1,4 +1,4 @@
-import { logger, toShuffled } from './../lib/index';
+import { ERROR_CODE, logger, toShuffled } from './../lib/index';
 import { initializeApp, cert, type ServiceAccount } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getDownloadURL, getStorage } from 'firebase-admin/storage';
@@ -137,7 +137,7 @@ async function addUser(uid: string) {
 
 export async function getUserDataByUid(uid?: string) {
   if (!uid) {
-    throw new Error('INVALID_USER_ID');
+    throw new Error(ERROR_CODE.INVALID_USER_ID);
   }
   const { id } = await getUserByUid(uid);
   const userdata = Data.userdata.find(e => e.id === id);
@@ -161,4 +161,34 @@ export async function setUserDataByUid(
 ) {
   const { id } = await getUserByUid(uid);
   return setUserData(id, payload);
+}
+
+export async function getGachaByUid(uid?: string) {
+  if (!uid) {
+    throw new Error(ERROR_CODE.INVALID_USER_ID);
+  }
+  const { id } = await getUserByUid(uid);
+  const gacha = await db.collection('gacha').doc(id).get();
+  if (gacha.exists) {
+    return { ...(gacha.data() as GachaPayload), id: gacha.id };
+  }
+  const newGacha = {
+    ssr: [],
+    sr: [],
+    r: 0,
+    pieces: 0,
+  };
+  await setGacha(id, newGacha);
+  return { ...newGacha, id };
+}
+
+interface GachaPayload {
+  ssr: number[];
+  sr: number[];
+  r: number;
+  pieces: number;
+}
+
+export async function setGacha(id: string, payload: Partial<GachaPayload>) {
+  await db.collection('gacha').doc(id).set(payload, { merge: true });
 }
