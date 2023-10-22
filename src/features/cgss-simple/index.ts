@@ -71,9 +71,9 @@ export async function pickCard(mustSr?: boolean): Promise<CGSSGachaResult> {
   };
 }
 
-export async function pickTenCards(id: string) {
+export async function pickTenCards(id: string, slowdownTime = 60 * 1000) {
   const now = new Date();
-  if (!Reqlist[id] || slowdownOver(now, Reqlist[id], 60 * 1000)) {
+  if (!Reqlist[id] || slowdownOver(now, Reqlist[id], slowdownTime)) {
     Reqlist[id] = now;
     const requests = new Array(10).fill(1).map((e, i) => pickCard(i === 9));
     const results = await Promise.all(requests);

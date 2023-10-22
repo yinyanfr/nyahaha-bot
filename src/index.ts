@@ -71,12 +71,12 @@ initializeData().then(() => {
     }
     // console.log(msg);
 
-    if (type === 'private' || text.match(/@nyahaha_bot/)) {
+    if (type === 'private' || text.match(/@nyahaha_bot/) || text.match(/^\//)) {
       const args = parseArgs(text.replace(/ *@nyahaha_bot */, ''));
       // console.log(args);
 
       if (args?.length) {
-        if (convertCC(args[0]) === '唱歌') {
+        if (convertCC(args[0]).match(/(唱歌|sing)/)) {
           try {
             const song = Radio.processRequest(`${uid}`, args[1]);
             await bot.sendMessage(chatId, `${song.title}\n\n${song.link}`);
@@ -101,7 +101,7 @@ initializeData().then(() => {
           }
         }
 
-        if (convertCC(args[0]).match(/喜欢/)) {
+        if (convertCC(args[0]).match(/(喜欢|love)/)) {
           try {
             await bot.sendSticker(chatId, pickLoveConfession(uid), {
               reply_to_message_id: message_id,
@@ -118,7 +118,7 @@ initializeData().then(() => {
           }
         }
 
-        if (convertCC(args[0]).match(/晚安/)) {
+        if (convertCC(args[0]).match(/(晚安|nighty)/)) {
           try {
             await goToBed(`${uid}`);
             await bot.sendMessage(chatId, '晚安安', {
@@ -136,7 +136,7 @@ initializeData().then(() => {
           }
         }
 
-        if (convertCC(args[0]).match(/事务所/)) {
+        if (convertCC(args[0]).match(/(事务所|theater|theatre)/)) {
           try {
             const production = await productionSummary(`${uid}`);
             const summary = (
@@ -168,7 +168,7 @@ initializeData().then(() => {
           }
         }
 
-        if (convertCC(args[0]).match(/抽卡/)) {
+        if (convertCC(args[0]).match(/(抽卡|gacha)/)) {
           try {
             const result = await drawComplex(`${uid}`);
             const { results, imageUrl, freeGacha, newBalance } = result;
@@ -194,7 +194,7 @@ initializeData().then(() => {
               (error as Error)?.message ?? error ?? '未知错误';
             let message = errorMessage;
             if (errorMessage === ERROR_CODE.SLOWDOWN) {
-              message = `抽卡请求有60秒冷却时间，请稍候。`;
+              message = `抽卡请求有15秒冷却时间，请稍候。`;
             } else if (errorMessage === ERROR_CODE.NOT_ENOUGH_STONES) {
               message = `${nickname}没有足够的石头了。`;
             }
@@ -241,7 +241,7 @@ initializeData().then(() => {
           }
         }
 
-        if (convertCC(args[0]).match(/签到/)) {
+        if (convertCC(args[0]).match(/(签到|reward)/)) {
           try {
             const bonus = await getDailyBonus(`${uid}`);
             await bot.sendMessage(
@@ -272,7 +272,7 @@ initializeData().then(() => {
           }
         }
 
-        if (convertCC(args[0]).match(/石头/)) {
+        if (convertCC(args[0]).match(/(石头|stone)/)) {
           try {
             const balance = userdata.balance ?? 0;
             await bot.sendMessage(chatId, `${nickname}有${balance}块石头！`, {
