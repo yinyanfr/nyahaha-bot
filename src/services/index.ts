@@ -16,32 +16,32 @@ initializeApp({
 const db = getFirestore();
 const bucket = getStorage().bucket();
 
-export class Data {
-  static users: User[] = [];
-  static userdata: UserData[] = [];
-}
+// export class Data {
+//   static users: User[] = [];
+//   static userdata: UserData[] = [];
+// }
 
-async function retriveUsers() {
-  const userSnapshots = await db.collection('users').get();
-  const users: User[] = [];
-  userSnapshots.forEach(e => {
-    users.push({ ...(e.data() as User), id: e.id });
-  });
-  Data.users = users;
-}
+// async function retriveUsers() {
+//   const userSnapshots = await db.collection('users').get();
+//   const users: User[] = [];
+//   userSnapshots.forEach(e => {
+//     users.push({ ...(e.data() as User), id: e.id });
+//   });
+//   Data.users = users;
+// }
 
-async function retriveUserData() {
-  const userdataSnapshots = await db.collection('userdata').get();
-  const userdata: UserData[] = [];
-  userdataSnapshots.forEach(e => {
-    userdata.push({ ...(e.data() as UserData), id: e.id });
-  });
-  Data.userdata = userdata;
-}
+// async function retriveUserData() {
+//   const userdataSnapshots = await db.collection('userdata').get();
+//   const userdata: UserData[] = [];
+//   userdataSnapshots.forEach(e => {
+//     userdata.push({ ...(e.data() as UserData), id: e.id });
+//   });
+//   Data.userdata = userdata;
+// }
 
 export async function initializeData() {
-  await retriveUsers();
-  await retriveUserData();
+  // await retriveUsers();
+  // await retriveUserData();
 }
 
 export function registerObservers() {
@@ -60,23 +60,23 @@ export function registerObservers() {
     },
   );
 
-  db.collection('userdata').onSnapshot(snapshots => {
-    const userdata: UserData[] = [];
-    snapshots.forEach(e => {
-      userdata.push({ ...(e.data() as UserData), id: e.id });
-    });
-    Data.userdata = userdata;
-    logger.info(`Loaded ${Data.userdata.length} userdata`);
-  });
+  // db.collection('userdata').onSnapshot(snapshots => {
+  //   const userdata: UserData[] = [];
+  //   snapshots.forEach(e => {
+  //     userdata.push({ ...(e.data() as UserData), id: e.id });
+  //   });
+  //   Data.userdata = userdata;
+  //   logger.info(`Loaded ${Data.userdata.length} userdata`);
+  // });
 
-  db.collection('users').onSnapshot(snapshots => {
-    const users: User[] = [];
-    snapshots.forEach(e => {
-      users.push({ ...(e.data() as User), id: e.id });
-    });
-    Data.users = users;
-    logger.info(`Loaded ${Data.users.length} users`);
-  });
+  // db.collection('users').onSnapshot(snapshots => {
+  //   const users: User[] = [];
+  //   snapshots.forEach(e => {
+  //     users.push({ ...(e.data() as User), id: e.id });
+  //   });
+  //   Data.users = users;
+  //   logger.info(`Loaded ${Data.users.length} users`);
+  // });
 }
 
 export async function addSong(song: Song) {
@@ -121,13 +121,39 @@ export async function deferredImageBuffers(imageUrls: string[]) {
   return results.map(e => Buffer.from(e.data, 'binary'));
 }
 
+async function findDocBy<T>(
+  collectionName: string,
+  criteria: string,
+  identifier: string,
+) {
+  const query = db
+    .collection(collectionName)
+    .where(criteria, '==', `${identifier}`);
+  const snapshots = await query.get();
+  if (!snapshots.empty) {
+    const docs: T[] = [];
+    snapshots.forEach(e => {
+      docs.push({ ...e.data(), id: e.id } as T);
+    });
+    return docs[0];
+  }
+}
+
 export async function getUserByUid(uid: string) {
-  const user = Data.users.find(e => e.uid === uid);
+  const user = await findDocBy<User>('users', 'uid', `${uid}`);
   if (!user) {
-    const id = await addUser(uid);
+    const id = await addUser(`${uid}`);
     return { id, uid };
   }
   return user;
+}
+
+export async function updateUser(id: string, payload: Partial<LoginQuery>) {
+  const { auth_date, hash, first_name, photo_url } = payload;
+  await db
+    .collection('users')
+    .doc(id)
+    .set({ auth_date, hash, first_name, photo_url }, { merge: true });
 }
 
 async function addUser(uid: string) {
@@ -140,15 +166,20 @@ export async function getUserDataByUid(uid?: string) {
     throw new Error(ERROR_CODE.INVALID_USER_ID);
   }
   const { id } = await getUserByUid(uid);
-  const userdata = Data.userdata.find(e => e.id === id);
-  if (!userdata) {
+  const userdataSnapshot = await db.collection('userdata').doc(id).get();
+  if (!userdataSnapshot.exists) {
     const data = {
       balance: 0,
     };
     setUserData(id, data);
     return data as UserData;
   }
-  return userdata;
+  return { ...userdataSnapshot.data(), id: userdataSnapshot.id } as UserData;
+}
+
+export async function getUserByToken(token: string) {
+  const user = await findDocBy<User>('users', 'hash', token);
+  return user;
 }
 
 export async function setUserData(id: string, payload: Partial<UserData>) {

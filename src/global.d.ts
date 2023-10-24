@@ -47,3 +47,11 @@ interface CGSSGachaResult {
   icon_image_ref: string | null;
   rarity: string;
 }
+
+interface LoginQuery {
+  id: string;
+  first_name: string;
+  photo_url: string;
+  auth_date: string;
+  hash: string;
+}

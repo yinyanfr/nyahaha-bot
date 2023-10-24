@@ -1,0 +1,17 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Debug Node.js",
+      "runtimeExecutable": "node",
+      "program": "${workspaceFolder}/dist/index.js", // Update to the entry file of your project
+      "outFiles": [
+        "${workspaceFolder}/dist/**/*.js"
+      ], // Path to your compiled TypeScript files
+      "sourceMaps": true,
+      "cwd": "${workspaceFolder}"
+    }
+  ]
+}
