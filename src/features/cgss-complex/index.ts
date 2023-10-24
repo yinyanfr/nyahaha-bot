@@ -45,7 +45,7 @@ export async function productionSummary(uid: string) {
 }
 
 export async function drawComplex(uid: string) {
-  const { balance, lastGachaDate, id } = await getUserDataByUid(uid);
+  const { balance, lastGachaDate, id } = await getUserDataByUid(`${uid}`);
   const now = dayjs().utcOffset(9);
   let newBalance = balance ?? 0;
 

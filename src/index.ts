@@ -152,7 +152,19 @@ initializeData().then(() => {
               `${nickname}共抽了${production.total}次，其中${summary.join(
                 '，',
               )}`,
-              { reply_to_message_id: message_id },
+              {
+                reply_to_message_id: message_id,
+                reply_markup: {
+                  inline_keyboard: [
+                    [
+                      {
+                        text: '查看详细',
+                        url: 'https://bot.yinyan.fr/user',
+                      },
+                    ],
+                  ],
+                },
+              },
             );
             return logger.info(
               `${uid} - ${first_name} ${
