@@ -12,8 +12,8 @@ import { addSong } from '../services';
     },
     {
       type: 'text',
-      name: 'link',
-      message: 'Youtube link: ',
+      name: 'youtubeId',
+      message: 'Youtube ID: ',
     },
     {
       type: 'text',
@@ -22,12 +22,12 @@ import { addSong } from '../services';
     },
   ]);
 
-  const { title, link, tags } = response;
+  const { title, youtubeId, tags } = response;
 
   try {
     const songId = await addSong({
       title,
-      link,
+      youtubeId,
       tags: tags.split(/[,，、] */),
     });
     console.log(`Successfully added ${title} - ${songId}`);
