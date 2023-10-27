@@ -17,8 +17,10 @@ interface BotMessage {
 }
 
 interface Song {
+  id?: string;
   title: string;
-  link: string;
+  youtubeId: string;
+  link?: string;
   tags: string[];
 }
 

@@ -16,32 +16,45 @@ initializeApp({
 const db = getFirestore();
 const bucket = getStorage().bucket();
 
-// export class Data {
-//   static users: User[] = [];
-//   static userdata: UserData[] = [];
-// }
+const UidReflexion: Record<string, string> = {};
 
-// async function retriveUsers() {
-//   const userSnapshots = await db.collection('users').get();
-//   const users: User[] = [];
-//   userSnapshots.forEach(e => {
-//     users.push({ ...(e.data() as User), id: e.id });
-//   });
-//   Data.users = users;
-// }
+export async function getDocumentId(uid: number | string) {
+  const cachedId = UidReflexion[`${uid}`];
+  if (cachedId) {
+    return cachedId;
+  }
+  const user = await getUserByUid(`${uid}`);
 
-// async function retriveUserData() {
-//   const userdataSnapshots = await db.collection('userdata').get();
-//   const userdata: UserData[] = [];
-//   userdataSnapshots.forEach(e => {
-//     userdata.push({ ...(e.data() as UserData), id: e.id });
-//   });
-//   Data.userdata = userdata;
-// }
+  UidReflexion[`${uid}`] = user.id;
+  return user.id;
+}
+
+export class Data {
+  static users: User[] = [];
+  static userdata: UserData[] = [];
+}
+
+async function retriveUsers() {
+  const userSnapshots = await db.collection('users').get();
+  const users: User[] = [];
+  userSnapshots.forEach(e => {
+    users.push({ ...(e.data() as User), id: e.id });
+  });
+  Data.users = users;
+}
+
+async function retriveUserData() {
+  const userdataSnapshots = await db.collection('userdata').get();
+  const userdata: UserData[] = [];
+  userdataSnapshots.forEach(e => {
+    userdata.push({ ...(e.data() as UserData), id: e.id });
+  });
+  Data.userdata = userdata;
+}
 
 export async function initializeData() {
-  // await retriveUsers();
-  // await retriveUserData();
+  await retriveUsers();
+  await retriveUserData();
 }
 
 export function registerObservers() {
@@ -60,23 +73,23 @@ export function registerObservers() {
     },
   );
 
-  // db.collection('userdata').onSnapshot(snapshots => {
-  //   const userdata: UserData[] = [];
-  //   snapshots.forEach(e => {
-  //     userdata.push({ ...(e.data() as UserData), id: e.id });
-  //   });
-  //   Data.userdata = userdata;
-  //   logger.info(`Loaded ${Data.userdata.length} userdata`);
-  // });
+  db.collection('userdata').onSnapshot(snapshots => {
+    const userdata: UserData[] = [];
+    snapshots.forEach(e => {
+      userdata.push({ ...(e.data() as UserData), id: e.id });
+    });
+    Data.userdata = userdata;
+    logger.info(`Loaded ${Data.userdata.length} userdata`);
+  });
 
-  // db.collection('users').onSnapshot(snapshots => {
-  //   const users: User[] = [];
-  //   snapshots.forEach(e => {
-  //     users.push({ ...(e.data() as User), id: e.id });
-  //   });
-  //   Data.users = users;
-  //   logger.info(`Loaded ${Data.users.length} users`);
-  // });
+  db.collection('users').onSnapshot(snapshots => {
+    const users: User[] = [];
+    snapshots.forEach(e => {
+      users.push({ ...(e.data() as User), id: e.id });
+    });
+    Data.users = users;
+    logger.info(`Loaded ${Data.users.length} users`);
+  });
 }
 
 export async function addSong(song: Song) {
@@ -140,7 +153,8 @@ async function findDocBy<T>(
 }
 
 export async function getUserByUid(uid: string) {
-  const user = await findDocBy<User>('users', 'uid', `${uid}`);
+  const storedUser = Data.users.find(e => e.uid === uid);
+  const user = storedUser ?? (await findDocBy<User>('users', 'uid', `${uid}`));
   if (!user) {
     const id = await addUser(`${uid}`);
     return { id, uid };
@@ -165,7 +179,14 @@ export async function getUserDataByUid(uid?: string) {
   if (!uid) {
     throw new Error(ERROR_CODE.INVALID_USER_ID);
   }
-  const { id } = await getUserByUid(uid);
+  const id = await getDocumentId(uid);
+  const storedUserdata = Data.userdata.find(e => e.id === id);
+  if (storedUserdata) {
+    return {
+      ...storedUserdata,
+      id,
+    };
+  }
   const userdataSnapshot = await db.collection('userdata').doc(id).get();
   if (!userdataSnapshot.exists) {
     const data = {
@@ -190,7 +211,7 @@ export async function setUserDataByUid(
   uid: string,
   payload: Partial<UserData>,
 ) {
-  const { id } = await getUserByUid(uid);
+  const id = await getDocumentId(uid);
   return setUserData(id, payload);
 }
 
@@ -198,7 +219,7 @@ export async function getGachaByUid(uid?: string) {
   if (!uid) {
     throw new Error(ERROR_CODE.INVALID_USER_ID);
   }
-  const { id } = await getUserByUid(uid);
+  const id = await getDocumentId(uid);
   const gacha = await db.collection('gacha').doc(id).get();
   if (gacha.exists) {
     return { ...(gacha.data() as GachaPayload), id: gacha.id };
