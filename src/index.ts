@@ -1,13 +1,19 @@
 import { helpText } from './features/help/index';
 import {
   ERROR_CODE,
+  formatComplexBudget,
+  formatSimpleBudget,
+  getLocalTime,
   logger,
   parseArgs,
   pickLoveConfession,
   pickSticker,
-} from './lib/index';
+} from './lib';
 import TelegramBot from 'node-telegram-bot-api';
 import {
+  addExpense,
+  getDocumentId,
+  getMonthlyExpenses,
   getUserDataByUid,
   registerObservers,
   setUserData,
@@ -26,9 +32,11 @@ import { pickTenCards } from './features/cgss-simple';
 import configs from './configs';
 
 import dayjs from 'dayjs';
+import localizedFormat from 'dayjs/plugin/localizedFormat';
 import utc from 'dayjs/plugin/utc';
 import relativeTime from 'dayjs/plugin/relativeTime';
 
+dayjs.extend(localizedFormat);
 dayjs.extend(utc);
 dayjs.extend(relativeTime);
 
@@ -53,7 +61,7 @@ logger.info('Bot running.');
 // });
 
 bot.on('message', async msg => {
-  // console.log(msg);
+  console.log(msg);
   const { id: uid, first_name, last_name } = msg.from ?? {};
   const { id: chatId, type } = msg.chat ?? {};
   const { text = '', message_id } = msg ?? {};
@@ -331,8 +339,8 @@ bot.on('message', async msg => {
       if (convertCC(args[0]).match(/(时区|utc|gmt)/i)) {
         try {
           const timezone = args[1];
-          if (!timezone.match(/^[+-]?[0-9]/)) {
-            throw new Error(ERROR_CODE.INVALID_TIMEZONE);
+          if (!timezone.match(/^[+-]?[0-9]$/)) {
+            throw new Error(ERROR_CODE.INVALID_INPUT);
           }
           if (userdata.id) {
             await setUserData(userdata.id, { timezone: parseInt(timezone) });
@@ -354,12 +362,132 @@ bot.on('message', async msg => {
         } catch (error) {
           const errorMessage = (error as Error)?.message ?? error ?? '未知错误';
           let message = errorMessage;
+          if (errorMessage === ERROR_CODE.INVALID_INPUT) {
+            message = `请以 +-数字 的格式输入时区，如 +8，-6`;
+          }
+          await bot.sendMessage(chatId, message, {
+            reply_to_message_id: message_id,
+          });
+          return logger.error((error as Error)?.message ?? error);
+        }
+      }
+
+      if (convertCC(args[0]).match(/(预算|budget)/i)) {
+        try {
+          const budget = args[1];
+          if (!budget.match(/^[0-9]+$/)) {
+            throw new Error(ERROR_CODE.INVALID_INPUT);
+          }
+          if (userdata.id) {
+            await setUserData(userdata.id, { budget: parseFloat(budget) });
+          } else {
+            await setUserDataByUid(`${uid}`, { budget: parseFloat(budget) });
+          }
+          let formattedMsg = '';
+          if (userdata.id) {
+            const expenses = await getMonthlyExpenses(userdata.id);
+            formattedMsg = formatSimpleBudget(
+              nickname,
+              expenses,
+              parseFloat(budget),
+            );
+          }
+          await bot.sendMessage(
+            chatId,
+            `已将${nickname}的每月预算设定为 ${budget}。\n${formattedMsg}`,
+            {
+              reply_to_message_id: message_id,
+            },
+          );
+          return logger.info(
+            `${uid} - ${first_name} ${
+              last_name ?? ''
+            } has changed their monthly budget to ${budget}.`,
+          );
+        } catch (error) {
+          const errorMessage = (error as Error)?.message ?? error ?? '未知错误';
+          let message = errorMessage;
+          if (errorMessage === ERROR_CODE.INVALID_INPUT) {
+            message = `请以 +-数字 的格式输入时区，如 +8，-6`;
+          }
+          await bot.sendMessage(chatId, message, {
+            reply_to_message_id: message_id,
+          });
+          return logger.error((error as Error)?.message ?? error);
+        }
+      }
+
+      if (convertCC(args[0]).match(/^-?[0-9]+(\.[0-9][0-9]?)?$/)) {
+        try {
+          const { timezone, budget } = userdata;
+          const localTime = getLocalTime(timezone ?? 8);
+          const amount = parseFloat(args[0]);
+          const category = args[1];
+          const expenses = await addExpense(userdata.id, {
+            chatId,
+            amount,
+            category,
+            localTime,
+          });
+
+          await bot.sendMessage(
+            chatId,
+            `${nickname}于${localTime.format(
+              'lll',
+            )}计入了用于${category}的${amount}的花销。\n${formatSimpleBudget(
+              nickname,
+              expenses,
+              budget,
+            )}`,
+            {
+              reply_to_message_id: message_id,
+            },
+          );
+          return logger.info(
+            `${uid} - ${first_name} ${
+              last_name ?? ''
+            } has added an expense for ${category} of ${amount}.`,
+          );
+        } catch (error) {
+          const errorMessage = (error as Error)?.message ?? error ?? '未知错误';
+          let message = errorMessage;
           if (errorMessage === ERROR_CODE.INVALID_USER_ID) {
             message = `请以 +-数字 的格式输入时区，如 +8，-6`;
           }
           await bot.sendMessage(chatId, message, {
             reply_to_message_id: message_id,
           });
+          return logger.error((error as Error)?.message ?? error);
+        }
+      }
+
+      if (convertCC(args[0]).match(/(账本|账簿|多少钱|钱包|book|expense)/)) {
+        try {
+          const id = await getDocumentId(uid);
+          const expenses = await getMonthlyExpenses(id);
+          const simple = formatSimpleBudget(
+            nickname,
+            expenses,
+            userdata?.budget,
+          );
+          const complex = formatComplexBudget(nickname, expenses);
+          await bot.sendMessage(
+            chatId,
+            `${simple}\n其中各项花费如下：\n${complex}`,
+            {
+              reply_to_message_id: message_id,
+            },
+          );
+          return logger.info(
+            `${uid} - ${first_name} ${
+              last_name ?? ''
+            } has consulted their monthly expenses.`,
+          );
+        } catch (error) {
+          await bot.sendMessage(
+            chatId,
+            (error as Error)?.message ?? '未知错误',
+          );
           return logger.error((error as Error)?.message ?? error);
         }
       }

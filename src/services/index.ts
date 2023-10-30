@@ -6,6 +6,7 @@ import axios from 'axios';
 
 import serviceAccount from './firebase-credentials.json';
 import { Radio } from '../features';
+import dayjs from 'dayjs';
 // import configs from '../configs';
 
 initializeApp({
@@ -243,4 +244,42 @@ interface GachaPayload {
 
 export async function setGacha(id: string, payload: Partial<GachaPayload>) {
   await db.collection('gacha').doc(id).set(payload, { merge: true });
+}
+
+export async function getMonthlyExpenses(id: string, month?: string) {
+  // month: YYYY-MM
+  const thisMonth = month ?? dayjs().format('YYYY-MM');
+  const bookRef = db.collection('bookkeeping').doc(`${id}-${thisMonth}`);
+  const monthlySnap = await bookRef.get();
+  if (monthlySnap.exists) {
+    return (monthlySnap.data() as BookKeeping)?.expenses ?? [];
+  }
+  return [];
+}
+
+export async function addExpense(id: string, expense: Expense) {
+  const { localTime, chatId, amount, category } = expense;
+  const month = localTime.format('YYYY-MM');
+  const expenseObj = {
+    chatId,
+    amount,
+    category,
+    localTime: localTime.format(),
+  };
+  const bookRef = db.collection('bookkeeping').doc(`${id}-${month}`);
+  const monthlySnap = await bookRef.get();
+  let expenses: Expense[] = [];
+  if (monthlySnap.exists) {
+    const monthly = monthlySnap.data() as BookKeeping;
+    expenses = [...monthly.expenses, expenseObj];
+  } else {
+    expenses = [expenseObj];
+  }
+  await bookRef.set(
+    {
+      expenses,
+    },
+    { merge: true },
+  );
+  return expenses;
 }
