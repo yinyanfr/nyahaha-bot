@@ -37,7 +37,7 @@ interface UserData {
   balance: number;
   lastBonusDate?: string;
   lastGachaDate?: string;
-  timezone?: string;
+  timezone?: number;
   sleepDate?: string;
 }
 

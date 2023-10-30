@@ -328,6 +328,42 @@ bot.on('message', async msg => {
         }
       }
 
+      if (convertCC(args[0]).match(/(时区|utc|gmt)/i)) {
+        try {
+          const timezone = args[1];
+          if (!timezone.match(/^[+-]?[0-9]/)) {
+            throw new Error(ERROR_CODE.INVALID_TIMEZONE);
+          }
+          if (userdata.id) {
+            await setUserData(userdata.id, { timezone: parseInt(timezone) });
+          } else {
+            await setUserDataByUid(`${uid}`, { timezone: parseInt(timezone) });
+          }
+          await bot.sendMessage(
+            chatId,
+            `已将${nickname}的时区设定为 UTC${timezone}。`,
+            {
+              reply_to_message_id: message_id,
+            },
+          );
+          return logger.info(
+            `${uid} - ${first_name} ${
+              last_name ?? ''
+            } has changed their timezone to ${timezone}.`,
+          );
+        } catch (error) {
+          const errorMessage = (error as Error)?.message ?? error ?? '未知错误';
+          let message = errorMessage;
+          if (errorMessage === ERROR_CODE.INVALID_USER_ID) {
+            message = `请以 +-数字 的格式输入时区，如 +8，-6`;
+          }
+          await bot.sendMessage(chatId, message, {
+            reply_to_message_id: message_id,
+          });
+          return logger.error((error as Error)?.message ?? error);
+        }
+      }
+
       if (convertCC(args[0]).match(/(帮助|help|start)/)) {
         await bot.sendMessage(chatId, helpText);
         return logger.info(

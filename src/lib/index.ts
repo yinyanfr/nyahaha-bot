@@ -10,6 +10,7 @@ export enum ERROR_CODE {
   USER_NOT_FOUND = 'USER_NOT_FOUND',
   SLOWDOWN = 'SLOWDOWN',
   INVALID_USER_ID = 'INVALID_USER_ID',
+  INVALID_TIMEZONE = 'INVALID_TIMEZONE',
 }
 
 export const logger = winston.createLogger({
