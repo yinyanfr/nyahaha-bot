@@ -1,7 +1,5 @@
 import { ERROR_CODE, randomElement, slowdownOver } from '../../lib';
 
-const YoutubeUrlPrefix = 'https://www.youtube.com/watch?v=';
-
 export default class Radio {
   static slowdownEnabled = true;
   static slowdownTime = 1000 * 60;
@@ -27,12 +25,10 @@ export default class Radio {
       song.title.match(new RegExp(tag, 'gi')),
     );
     if (titleMatched.length) {
-      const picked = randomElement(titleMatched);
-      return { ...picked, link: `${YoutubeUrlPrefix}${picked.youtubeId}` };
+      return randomElement(titleMatched);
     }
 
-    const picked = randomElement(Radio.Songlist);
-    return { ...picked, link: `${YoutubeUrlPrefix}${picked.youtubeId}` };
+    return randomElement(Radio.Songlist);
   }
 
   static processRequest(id: string, tag?: string) {

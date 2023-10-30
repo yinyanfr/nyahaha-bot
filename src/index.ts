@@ -32,6 +32,8 @@ import relativeTime from 'dayjs/plugin/relativeTime';
 dayjs.extend(utc);
 dayjs.extend(relativeTime);
 
+const YoutubeUrlPrefix = 'https://www.youtube.com/watch?v=';
+
 const botToken = configs.token;
 
 registerObservers();
@@ -77,7 +79,10 @@ bot.on('message', async msg => {
       if (convertCC(args[0]).match(/(唱歌|sing)/)) {
         try {
           const song = Radio.processRequest(`${uid}`, args[1]);
-          await bot.sendMessage(chatId, `${song.title}\n\n${song.link}`);
+          await bot.sendMessage(
+            chatId,
+            `${song.title}\n\n${YoutubeUrlPrefix}${song.youtubeId}`,
+          );
           return logger.info(
             `Picked ${song.title} for ${uid} - ${first_name} ${last_name}`,
           );
