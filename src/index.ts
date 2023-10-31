@@ -12,12 +12,15 @@ import {
 import TelegramBot from 'node-telegram-bot-api';
 import {
   addExpense,
+  findExpense,
   getDocumentId,
   getMonthlyExpenses,
   getUserDataByUid,
   registerObservers,
+  removeExpense,
   setUserData,
   setUserDataByUid,
+  updateExpense,
 } from './services';
 import { Converter } from 'opencc-js';
 import {
@@ -61,7 +64,7 @@ logger.info('Bot running.');
 // });
 
 bot.on('message', async msg => {
-  console.log(msg);
+  // console.log(msg);
   const { id: uid, first_name, last_name } = msg.from ?? {};
   const { id: chatId, type } = msg.chat ?? {};
   const { text = '', message_id } = msg ?? {};
@@ -339,7 +342,7 @@ bot.on('message', async msg => {
       if (convertCC(args[0]).match(/(时区|utc|gmt)/i)) {
         try {
           const timezone = args[1];
-          if (!timezone.match(/^[+-]?[0-9]$/)) {
+          if (!timezone.match(/^[+-]?[0-9][0-9]?$/)) {
             throw new Error(ERROR_CODE.INVALID_INPUT);
           }
           if (userdata.id) {
@@ -390,6 +393,7 @@ bot.on('message', async msg => {
               nickname,
               expenses,
               parseFloat(budget),
+              userdata.timezone,
             );
           }
           await bot.sendMessage(
@@ -408,7 +412,7 @@ bot.on('message', async msg => {
           const errorMessage = (error as Error)?.message ?? error ?? '未知错误';
           let message = errorMessage;
           if (errorMessage === ERROR_CODE.INVALID_INPUT) {
-            message = `请以 +-数字 的格式输入时区，如 +8，-6`;
+            message = `请输入一个正整数作为预算的金额。`;
           }
           await bot.sendMessage(chatId, message, {
             reply_to_message_id: message_id,
@@ -417,14 +421,19 @@ bot.on('message', async msg => {
         }
       }
 
+      // addExpense
       if (convertCC(args[0]).match(/^-?[0-9]+(\.[0-9][0-9]?)?$/)) {
         try {
           const { timezone, budget } = userdata;
           const localTime = getLocalTime(timezone ?? 8);
           const amount = parseFloat(args[0]);
-          const category = args[1];
+          if (!amount) {
+            throw new Error(ERROR_CODE.INVALID_INPUT);
+          }
+          const category = args[1] ?? '默认';
           const expenses = await addExpense(userdata.id, {
             chatId,
+            message_id,
             amount,
             category,
             localTime,
@@ -438,6 +447,7 @@ bot.on('message', async msg => {
               nickname,
               expenses,
               budget,
+              userdata.timezone,
             )}`,
             {
               reply_to_message_id: message_id,
@@ -451,8 +461,8 @@ bot.on('message', async msg => {
         } catch (error) {
           const errorMessage = (error as Error)?.message ?? error ?? '未知错误';
           let message = errorMessage;
-          if (errorMessage === ERROR_CODE.INVALID_USER_ID) {
-            message = `请以 +-数字 的格式输入时区，如 +8，-6`;
+          if (errorMessage === ERROR_CODE.INVALID_INPUT) {
+            message = `0 仅用于删除已经记录的支出记录。`;
           }
           await bot.sendMessage(chatId, message, {
             reply_to_message_id: message_id,
@@ -469,6 +479,7 @@ bot.on('message', async msg => {
             nickname,
             expenses,
             userdata?.budget,
+            userdata.timezone,
           );
           const complex = formatComplexBudget(nickname, expenses);
           await bot.sendMessage(
@@ -501,5 +512,98 @@ bot.on('message', async msg => {
     }
 
     await bot.sendSticker(chatId, pickSticker());
+  }
+});
+
+bot.on('edited_message', async msg => {
+  const { id: uid, first_name, last_name } = msg.from ?? {};
+  const { id: chatId, type } = msg.chat ?? {};
+  const { text = '', message_id } = msg ?? {};
+  if (!uid) {
+    return 0;
+  }
+  const userdata = await getUserDataByUid(`${uid}`);
+  const nickname = userdata.nickname ?? '大哥哥';
+
+  if (
+    (userdata.id && type === 'private') ||
+    text.match(/@nyahaha_bot/) ||
+    text.match(/^\//)
+  ) {
+    const args = parseArgs(text.replace(/ *@nyahaha_bot */, ''));
+
+    if (args?.length) {
+      const existingExpenses = await findExpense(
+        userdata.id,
+        chatId,
+        message_id,
+        userdata.timezone,
+      );
+      if (existingExpenses) {
+        const { expenses, expenseToChangeIndex } = existingExpenses;
+        const amount = parseFloat(args[0]);
+        const category = args[1] ?? '默认';
+        const expense = expenses[expenseToChangeIndex];
+        try {
+          if (amount === 0) {
+            const updatedExpenses = await removeExpense(
+              userdata.id,
+              expenses,
+              expenseToChangeIndex,
+            );
+            const formattedMsg = formatSimpleBudget(
+              nickname,
+              updatedExpenses,
+              userdata.budget,
+              userdata.timezone,
+            );
+            await bot.sendMessage(
+              chatId,
+              `已将${nickname}于${expense.localTime}记录的支出删除。\n${formattedMsg}`,
+              {
+                reply_to_message_id: message_id,
+              },
+            );
+            return logger.info(
+              `${uid} - ${first_name} ${
+                last_name ?? ''
+              } has deleted an expense of ${expense.localTime}.`,
+            );
+          } else {
+            const updatedExpenses = await updateExpense(
+              userdata.id,
+              expenses,
+              expenseToChangeIndex,
+              amount,
+              category,
+            );
+            const formattedMsg = formatSimpleBudget(
+              nickname,
+              updatedExpenses,
+              userdata.budget,
+              userdata.timezone,
+            );
+            await bot.sendMessage(
+              chatId,
+              `已将${nickname}于${expense.localTime}记录的支出修改为用于${category}的${amount}。\n${formattedMsg}`,
+              {
+                reply_to_message_id: message_id,
+              },
+            );
+            return logger.info(
+              `${uid} - ${first_name} ${
+                last_name ?? ''
+              } has modified an expense for ${category} of ${amount}.`,
+            );
+          }
+        } catch (error) {
+          await bot.sendMessage(
+            chatId,
+            (error as Error)?.message ?? '未知错误',
+          );
+          return logger.error((error as Error)?.message ?? error);
+        }
+      }
+    }
   }
 });

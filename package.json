@@ -1,11 +1,11 @@
 {
   "name": "nyahaha-bot",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "description": "The code base for a personal bot.",
   "main": "dist/index.js",
   "scripts": {
-    "start": "ts-node src/index.ts",
-    "start:server": "ts-node src/server.ts",
+    "start": "NODE_ENV=development ts-node src/index.ts",
+    "start:server": "NODE_ENV=development ts-node src/server.ts",
     "lint": "eslint --ext .ts,.tsx ./src",
     "build": "npm run lint && tsc",
     "clean": "rm -rf dist/",

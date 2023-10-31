@@ -12,6 +12,7 @@ export enum ERROR_CODE {
   SLOWDOWN = 'SLOWDOWN',
   INVALID_USER_ID = 'INVALID_USER_ID',
   INVALID_INPUT = 'INVALID_INPUT',
+  NOT_FOUND = 'NOT_FOUND',
 }
 
 export const logger = winston.createLogger({
@@ -137,18 +138,29 @@ export async function createFolder(folderPath: string) {
   }
 }
 
-export function getLocalTime(utc: number, time?: string | Date) {
+export function getLocalTime(utc = 8, time?: string | Date) {
   return dayjs(time).utcOffset(utc);
 }
 
-function analyseExpensesSimple(expenses: Expense[], budget: number = 0) {
+function analyseExpensesSimple(
+  expenses: Expense[],
+  budget: number = 0,
+  utc = 8,
+) {
+  const today = dayjs().utcOffset(utc);
+  console.log(today.format('llll'));
+  const daily = expenses
+    .filter(e => dayjs(e.localTime).utcOffset(utc).isSame(today, 'day'))
+    .map(e => e.amount)
+    .reduce((a, b) => a + b);
   const total = expenses.map(e => e.amount).reduce((a, b) => a + b);
-  const remainingDays = dayjs().daysInMonth() - dayjs().date() + 1;
+  const remainingDays = today.daysInMonth() - today.date() + 1;
   const remainingBudget = budget - total;
   const remainingDaily =
     remainingBudget > 0 ? remainingBudget / remainingDays : 0;
 
   return {
+    daily: daily.toFixed(2),
     total: total.toFixed(2),
     remainingDays,
     remainingBudget: remainingBudget.toFixed(2),
@@ -160,12 +172,13 @@ export function formatSimpleBudget(
   nickname: string,
   expenses: Expense[],
   budget: number = 0,
+  utc = 8,
 ) {
-  const { total, remainingDays, remainingBudget, remainingDaily } =
-    analyseExpensesSimple(expenses, budget);
-  return `${nickname}本月已花${total}，本月剩余${remainingDays}天，${
+  const { daily, total, remainingDays, remainingBudget, remainingDaily } =
+    analyseExpensesSimple(expenses, budget, utc);
+  return `${nickname}今天花了${daily}，本月已花${total}，${
     budget
-      ? `${nickname}的预算还剩${remainingBudget}，日均${remainingDaily}`
+      ? `${nickname}的预算还剩${remainingBudget}，本月剩余${remainingDays}天，剩余日均${remainingDaily}`
       : `${nickname}尚未设置预算，可通过「预算」命令进行设置`
   }。`;
 }

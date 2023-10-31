@@ -1,4 +1,4 @@
-import { ERROR_CODE, logger, toShuffled } from './../lib/index';
+import { ERROR_CODE, getLocalTime, logger, toShuffled } from './../lib';
 import { initializeApp, cert, type ServiceAccount } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getDownloadURL, getStorage } from 'firebase-admin/storage';
@@ -60,19 +60,26 @@ export async function initializeData() {
 
 export function registerObservers() {
   // Songlist Observer
-  db.collection('songs').onSnapshot(
-    snapshots => {
-      const songlist: Song[] = [];
-      snapshots.forEach(e => {
-        songlist.push(e.data() as Song);
-      });
-      Radio.Songlist = toShuffled(songlist) as Song[];
-      logger.info(`Song list updated, new length: ${Radio.Songlist.length}`);
-    },
-    error => {
-      logger.error(error);
-    },
-  );
+  if (process.env.NODE_ENV === 'development') {
+    Radio.Songlist = require('./songs.json');
+    logger.info(
+      `Song list updated from local file, new length: ${Radio.Songlist.length}`,
+    );
+  } else {
+    db.collection('songs').onSnapshot(
+      snapshots => {
+        const songlist: Song[] = [];
+        snapshots.forEach(e => {
+          songlist.push(e.data() as Song);
+        });
+        Radio.Songlist = toShuffled(songlist) as Song[];
+        logger.info(`Song list updated, new length: ${Radio.Songlist.length}`);
+      },
+      error => {
+        logger.error(error);
+      },
+    );
+  }
 
   db.collection('userdata').onSnapshot(snapshots => {
     const userdata: UserData[] = [];
@@ -258,10 +265,11 @@ export async function getMonthlyExpenses(id: string, month?: string) {
 }
 
 export async function addExpense(id: string, expense: Expense) {
-  const { localTime, chatId, amount, category } = expense;
+  const { chatId, localTime, message_id, amount, category } = expense;
   const month = localTime.format('YYYY-MM');
   const expenseObj = {
     chatId,
+    message_id,
     amount,
     category,
     localTime: localTime.format(),
@@ -282,4 +290,73 @@ export async function addExpense(id: string, expense: Expense) {
     { merge: true },
   );
   return expenses;
+}
+
+export async function findExpense(
+  id: string,
+  chatId: number,
+  message_id: number,
+  utc = 8,
+) {
+  const localTime = getLocalTime(utc);
+  const month = localTime.format('YYYY-MM');
+  const bookRef = db.collection('bookkeeping').doc(`${id}-${month}`);
+  const monthlySnap = await bookRef.get();
+  if (monthlySnap.exists) {
+    const expenses = (monthlySnap.data() as BookKeeping)?.expenses;
+    const expenseToChangeIndex = expenses?.findIndex(
+      e => e.chatId === chatId && e.message_id === message_id,
+    );
+    return expenseToChangeIndex >= 0
+      ? { expenses, expenseToChangeIndex }
+      : false;
+  }
+  return false;
+}
+
+export async function updateExpense(
+  id: string,
+  expenses: Expense[],
+  expenseToChangeIndex: number,
+  amount: number,
+  category: string,
+) {
+  const { chatId, localTime, message_id } = expenses[expenseToChangeIndex];
+  const month = dayjs(localTime).format('YYYY-MM');
+  const bookRef = db.collection('bookkeeping').doc(`${id}-${month}`);
+  const expenseObj = {
+    chatId,
+    message_id,
+    amount,
+    category,
+    localTime,
+  };
+  const newExpenses = [...expenses];
+  newExpenses.splice(expenseToChangeIndex, 1, expenseObj);
+  await bookRef.set(
+    {
+      expenses: newExpenses,
+    },
+    { merge: true },
+  );
+  return newExpenses;
+}
+
+export async function removeExpense(
+  id: string,
+  expenses: Expense[],
+  expenseToChangeIndex: number,
+) {
+  const { localTime } = expenses[expenseToChangeIndex];
+  const month = dayjs(localTime).format('YYYY-MM');
+  const bookRef = db.collection('bookkeeping').doc(`${id}-${month}`);
+  const newExpenses = [...expenses];
+  newExpenses.splice(expenseToChangeIndex, 1);
+  await bookRef.set(
+    {
+      expenses: newExpenses,
+    },
+    { merge: true },
+  );
+  return newExpenses;
 }

@@ -61,6 +61,7 @@ interface LoginQuery {
 
 interface Expense {
   chatId: number;
+  message_id: number;
   amount: number;
   category: string;
   localTime: any;
