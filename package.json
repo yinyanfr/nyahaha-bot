@@ -1,11 +1,11 @@
 {
   "name": "nyahaha-bot",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "description": "The code base for a personal bot.",
   "main": "dist/index.js",
   "scripts": {
-    "start": "ts-node src/index.ts",
-    "start:server": "ts-node src/server.ts",
+    "start": "NODE_ENV=development ts-node src/index.ts",
+    "start:server": "NODE_ENV=development ts-node src/server.ts",
     "lint": "eslint --ext .ts,.tsx ./src",
     "build": "npm run lint && tsc",
     "clean": "rm -rf dist/",
@@ -49,7 +49,7 @@
     "express": "^4.18.2",
     "firebase-admin": "^11.10.1",
     "join-images": "^1.1.5",
-    "node-telegram-bot-api": "^0.63.0",
+    "node-telegram-bot-api": "^0.64.0",
     "opencc-js": "^1.0.5",
     "prompts": "^2.4.2",
     "sharp": "^0.32.6",

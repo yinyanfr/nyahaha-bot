@@ -39,6 +39,7 @@ interface UserData {
   lastGachaDate?: string;
   timezone?: number;
   sleepDate?: string;
+  budget?: number;
 }
 
 interface CGSSGachaResult {
@@ -56,4 +57,16 @@ interface LoginQuery {
   photo_url: string;
   auth_date: string;
   hash: string;
+}
+
+interface Expense {
+  chatId: number;
+  message_id: number;
+  amount: number;
+  category: string;
+  localTime: any;
+}
+
+interface BookKeeping {
+  expenses: Expense[];
 }
