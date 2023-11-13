@@ -1,3 +1,4 @@
+import { handleUpdateExpense } from './handlers/book';
 import { helpText } from './features/help/index';
 import {
   ERROR_CODE,
@@ -8,19 +9,18 @@ import {
   parseArgs,
   pickLoveConfession,
   pickSticker,
+  type MessageInfo,
+  CALLBACK_CODE,
 } from './lib';
 import TelegramBot from 'node-telegram-bot-api';
 import {
   addExpense,
-  findExpense,
   getDocumentId,
   getMonthlyExpenses,
   getUserDataByUid,
   registerObservers,
-  removeExpense,
   setUserData,
   setUserDataByUid,
-  updateExpense,
 } from './services';
 import { Converter } from 'opencc-js';
 import {
@@ -59,10 +59,6 @@ if (!botToken) {
 const bot = new TelegramBot(botToken, { polling: true });
 logger.info('Bot running.');
 
-// bot.onText(/@nyahaha_bot /g, msg => {
-//   console.log(msg);
-// });
-
 bot.on('message', async msg => {
   // console.log(msg);
   const { id: uid, first_name, last_name } = msg.from ?? {};
@@ -80,7 +76,6 @@ bot.on('message', async msg => {
     });
     logger.info(`${uid} - ${first_name} ${last_name} has woken up.`);
   }
-  // console.log(msg);
 
   if (type === 'private' || text.match(/@nyahaha_bot/) || text.match(/^\//)) {
     const args = parseArgs(text.replace(/ *@nyahaha_bot */, ''));
@@ -89,11 +84,23 @@ bot.on('message', async msg => {
     if (args?.length) {
       if (convertCC(args[0]).match(/(唱歌|sing)/)) {
         try {
-          const song = Radio.processRequest(`${uid}`, args[1]);
+          const WHY =
+            'AgACAgQAAxkBAAID8WVBKdYqhAWohw9Wc8-Vo8JacRKUAAJtvzEbx4cIUrUNU3kxtOKPAQADAgADeAADMwQ';
+          const thatSong = 'W8DCWI_Gc9c';
+          const song = Radio.processRequest(
+            `${uid}`,
+            args[1]?.length ? convertCC(args[1]) : undefined,
+          );
           await bot.sendMessage(
             chatId,
             `${song.title}\n\n${YoutubeUrlPrefix}${song.youtubeId}`,
           );
+          if (song.youtubeId === thatSong) {
+            await bot.sendPhoto(chatId, WHY, {
+              reply_to_message_id: message_id,
+              caption: '为什么要演奏春日影!',
+            });
+          }
           return logger.info(
             `Picked ${song.title} for ${uid} - ${first_name} ${last_name}`,
           );
@@ -451,6 +458,18 @@ bot.on('message', async msg => {
             )}`,
             {
               reply_to_message_id: message_id,
+              reply_markup: {
+                inline_keyboard: [
+                  [
+                    {
+                      text: '删除',
+                      callback_data: CALLBACK_CODE.REMOVE_EXPENSE,
+                    },
+                  ],
+                ],
+                selective: true,
+                one_time_keyboard: true,
+              },
             },
           );
           return logger.info(
@@ -487,6 +506,16 @@ bot.on('message', async msg => {
             `${simple}\n其中各项花费如下：\n${complex}`,
             {
               reply_to_message_id: message_id,
+              reply_markup: {
+                inline_keyboard: [
+                  [
+                    {
+                      text: '查看详细',
+                      url: 'https://bot.yinyan.fr/book',
+                    },
+                  ],
+                ],
+              },
             },
           );
           return logger.info(
@@ -532,78 +561,50 @@ bot.on('edited_message', async msg => {
   ) {
     const args = parseArgs(text.replace(/ *@nyahaha_bot */, ''));
 
+    const info: MessageInfo = {
+      userdata,
+      nickname,
+      uid,
+      first_name,
+      last_name,
+      chatId,
+      message_id,
+    };
+
     if (args?.length) {
-      const existingExpenses = await findExpense(
-        userdata.id,
-        chatId,
-        message_id,
-        userdata.timezone,
-      );
-      if (existingExpenses) {
-        const { expenses, expenseToChangeIndex } = existingExpenses;
-        const amount = parseFloat(args[0]);
-        const category = args[1] ?? '默认';
-        const expense = expenses[expenseToChangeIndex];
-        try {
-          if (amount === 0) {
-            const updatedExpenses = await removeExpense(
-              userdata.id,
-              expenses,
-              expenseToChangeIndex,
-            );
-            const formattedMsg = formatSimpleBudget(
-              nickname,
-              updatedExpenses,
-              userdata.budget,
-              userdata.timezone,
-            );
-            await bot.sendMessage(
-              chatId,
-              `已将${nickname}于${expense.localTime}记录的支出删除。\n${formattedMsg}`,
-              {
-                reply_to_message_id: message_id,
-              },
-            );
-            return logger.info(
-              `${uid} - ${first_name} ${
-                last_name ?? ''
-              } has deleted an expense of ${expense.localTime}.`,
-            );
-          } else {
-            const updatedExpenses = await updateExpense(
-              userdata.id,
-              expenses,
-              expenseToChangeIndex,
-              amount,
-              category,
-            );
-            const formattedMsg = formatSimpleBudget(
-              nickname,
-              updatedExpenses,
-              userdata.budget,
-              userdata.timezone,
-            );
-            await bot.sendMessage(
-              chatId,
-              `已将${nickname}于${expense.localTime}记录的支出修改为用于${category}的${amount}。\n${formattedMsg}`,
-              {
-                reply_to_message_id: message_id,
-              },
-            );
-            return logger.info(
-              `${uid} - ${first_name} ${
-                last_name ?? ''
-              } has modified an expense for ${category} of ${amount}.`,
-            );
-          }
-        } catch (error) {
-          await bot.sendMessage(
-            chatId,
-            (error as Error)?.message ?? '未知错误',
-          );
-          return logger.error((error as Error)?.message ?? error);
-        }
-      }
+      const amount = parseFloat(args[0]);
+      const category = args[1] ?? '默认';
+      await handleUpdateExpense(bot, info, { amount, category });
+    }
+  }
+});
+
+bot.on('callback_query', async msg => {
+  const { id: uid, first_name, last_name } = msg.from ?? {};
+  const { id: chatId } = msg.message?.chat ?? {};
+  const { message_id } = msg.message?.reply_to_message ?? {};
+  const senderUid = msg.message?.reply_to_message?.from?.id;
+  if (!uid || !chatId || !message_id) {
+    return 0;
+  }
+  const userdata = await getUserDataByUid(`${uid}`);
+  const nickname = userdata.nickname ?? '大哥哥';
+
+  const info: MessageInfo = {
+    userdata,
+    nickname,
+    uid,
+    first_name,
+    last_name,
+    chatId,
+    message_id,
+  };
+
+  if (msg.data === CALLBACK_CODE.REMOVE_EXPENSE) {
+    if (uid === senderUid) {
+      await handleUpdateExpense(bot, info, { amount: 0 });
+    } else {
+      await bot.sendMessage(chatId, `${nickname}只能删除自己记录的支出`);
     }
   }
 });
