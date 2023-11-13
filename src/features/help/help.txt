@@ -4,5 +4,6 @@ rewards - 签到
 stone - 石头：显示石头数量
 gacha - 抽卡
 theater - 事务所：显示目前抽卡的总结
+book - 账本
 love - 喜欢：姬器人有四分之一的几率接受
 nighty - 晚安安

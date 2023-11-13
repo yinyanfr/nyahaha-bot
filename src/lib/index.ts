@@ -5,6 +5,8 @@ import stickers from './miaohaha.json';
 import configs from '../configs';
 import dayjs from 'dayjs';
 
+export * from './types';
+
 export enum ERROR_CODE {
   BONUS_ALREADY_GOT = 'BONUS_ALREADY_GOT',
   NOT_ENOUGH_STONES = 'NOT_ENOUGH_STONES',
@@ -13,6 +15,10 @@ export enum ERROR_CODE {
   INVALID_USER_ID = 'INVALID_USER_ID',
   INVALID_INPUT = 'INVALID_INPUT',
   NOT_FOUND = 'NOT_FOUND',
+}
+
+export enum CALLBACK_CODE {
+  REMOVE_EXPENSE = 'REMOVE_EXPENSE',
 }
 
 export const logger = winston.createLogger({
@@ -148,12 +154,11 @@ function analyseExpensesSimple(
   utc = 8,
 ) {
   const today = dayjs().utcOffset(utc);
-  console.log(today.format('llll'));
   const daily = expenses
     .filter(e => dayjs(e.localTime).utcOffset(utc).isSame(today, 'day'))
     .map(e => e.amount)
-    .reduce((a, b) => a + b);
-  const total = expenses.map(e => e.amount).reduce((a, b) => a + b);
+    .reduce((a, b) => a + b, 0);
+  const total = expenses.map(e => e.amount).reduce((a, b) => a + b, 0);
   const remainingDays = today.daysInMonth() - today.date() + 1;
   const remainingBudget = budget - total;
   const remainingDaily =
@@ -184,7 +189,7 @@ export function formatSimpleBudget(
 }
 
 function analyseExpensesComplex(expenses: Expense[]) {
-  const total = expenses.map(e => e.amount).reduce((a, b) => a + b);
+  const total = expenses.map(e => e.amount).reduce((a, b) => a + b, 0);
   const categorized: Record<string, number> = {};
   expenses.forEach(({ category, amount }) => {
     if (categorized[category]) {
@@ -198,7 +203,7 @@ function analyseExpensesComplex(expenses: Expense[]) {
     amount: categorized[key],
     ratio: categorized[key] / total,
   }));
-  sorted.sort((a, b) => a.amount - b.amount);
+  sorted.sort((a, b) => b.amount - a.amount);
   return { sorted };
 }
 

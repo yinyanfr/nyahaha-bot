@@ -70,3 +70,20 @@ interface Expense {
 interface BookKeeping {
   expenses: Expense[];
 }
+
+declare namespace Express {
+  export interface Request {
+    user?: User;
+  }
+}
+
+declare namespace API {
+  interface ExpensePayload {
+    id: string;
+    chatId: string;
+    message_id: string;
+    utc?: number;
+    amount?: number;
+    category?: string;
+  }
+}
