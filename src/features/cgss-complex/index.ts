@@ -31,7 +31,7 @@ async function saveGachaResult(uid: string, results: CGSSGachaResult[]) {
 }
 
 export async function productionSummary(uid: string) {
-  const { ssr = [], sr = [], r = 0 } = await getGachaByUid(uid);
+  const { ssr = [], sr = [], r = 0, pieces = 0 } = await getGachaByUid(uid);
   const total = ssr.length + sr.length + r;
   return {
     ssr: ssr.length,
@@ -41,6 +41,7 @@ export async function productionSummary(uid: string) {
     srPercentage: sr.length / total || 0,
     rPercentage: r / total || 0,
     total,
+    pieces,
   };
 }
 

@@ -1,6 +1,6 @@
 {
   "name": "nyahaha-bot",
-  "version": "0.0.11",
+  "version": "0.0.12",
   "description": "The code base for a personal bot.",
   "main": "dist/index.js",
   "scripts": {
@@ -12,7 +12,8 @@
     "prepublishOnly": "tsc",
     "lint-staged": "lint-staged",
     "prepare": "husky install",
-    "add-song": "ts-node src/utils/addSong.ts"
+    "add-song": "ts-node src/utils/addSong.ts",
+    "download-spreads": "ts-node src/utils/downloadSpreads.ts"
   },
   "keywords": [],
   "author": "",
