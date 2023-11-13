@@ -1,19 +1,19 @@
 /// <reference path="./index.d.ts" />
 import {
   ERROR_CODE,
-  createFolder,
+  // createFolder,
   randomElement,
   slowdownOver,
 } from '../../lib';
 import {
-  deferredImageBuffers,
+  // deferredImageBuffers,
   getCachedCard,
   getImageUrl,
 } from '../../services';
 import allCards from './card_list.json';
-import joinImages from 'join-images';
-import shortUUID from 'short-uuid';
-import { join } from 'node:path';
+// import joinImages from 'join-images';
+// import shortUUID from 'short-uuid';
+// import { join } from 'node:path';
 
 interface GroupedCards {
   r: CardInfo[];
@@ -53,7 +53,14 @@ export async function pickCard(mustSr?: boolean): Promise<CGSSGachaResult> {
   }
   const card = randomElement(grouped[rarity]);
   const cardDetail = (await getCachedCard(card.id)) as CardDetail;
-  const { id, title, name_only, card_image_ref, icon_image_ref } = cardDetail;
+  const {
+    id,
+    title,
+    name_only,
+    card_image_ref,
+    icon_image_ref,
+    spread_image_ref,
+  } = cardDetail;
 
   return {
     id,
@@ -67,6 +74,10 @@ export async function pickCard(mustSr?: boolean): Promise<CGSSGachaResult> {
       rarity === 'r'
         ? null
         : await getImageUrl(icon_image_ref, `cgss-cards/${id}/icon.png`),
+    spread_image_ref:
+      rarity === 'r' || !spread_image_ref
+        ? null
+        : await getImageUrl(spread_image_ref, `cgss-cards/${id}/spread.png`),
     rarity,
   };
 }
@@ -78,23 +89,29 @@ export async function pickTenCards(id: string, slowdownTime = 60 * 1000) {
     const requests = new Array(10).fill(1).map((e, i) => pickCard(i === 9));
     const results = await Promise.all(requests);
     const cardImageUrls = results
-      .filter(e => e.card_image_ref)
-      .map(e => e.card_image_ref as string);
-    const cardImageBuffers = await deferredImageBuffers(cardImageUrls);
-    const joinedImage = await joinImages(cardImageBuffers, {
-      direction: 'horizontal',
-      align: 'center',
-    });
+      .filter(e => e.spread_image_ref || e.card_image_ref)
+      .map(e => (e.spread_image_ref as string) || (e.card_image_ref as string));
 
-    // Problem with the API, neither Buffer nor Stream would work, had to write to a file
-    const tmpImageDir = join(__dirname, '../../..', 'tmp');
-    await createFolder(tmpImageDir);
-    const tmpImagePath = join(tmpImageDir, `${shortUUID.generate()}.jpg`);
-    await joinedImage.jpeg().toFile(tmpImagePath);
     return {
       results,
-      imageUrl: tmpImagePath,
+      cardImageUrls,
     };
+
+    // const cardImageBuffers = await deferredImageBuffers(cardImageUrls);
+    // const joinedImage = await joinImages(cardImageBuffers, {
+    //   direction: 'horizontal',
+    //   align: 'center',
+    // });
+
+    // // Problem with the API, neither Buffer nor Stream would work, had to write to a file
+    // const tmpImageDir = join(__dirname, '../../..', 'tmp');
+    // await createFolder(tmpImageDir);
+    // const tmpImagePath = join(tmpImageDir, `${shortUUID.generate()}.jpg`);
+    // await joinedImage.jpeg().toFile(tmpImagePath);
+    // return {
+    //   results,
+    //   imageUrl: tmpImagePath,
+    // };
   } else {
     throw ERROR_CODE.SLOWDOWN;
   }

@@ -9,6 +9,8 @@ import { Radio } from '../features';
 import dayjs from 'dayjs';
 // import configs from '../configs';
 
+const UA = 'NyahahaBot/0.0.12';
+
 initializeApp({
   credential: cert(serviceAccount as ServiceAccount),
   storageBucket: 'gs://nyahaha-bot.appspot.com',
@@ -18,6 +20,15 @@ const db = getFirestore();
 const bucket = getStorage().bucket();
 
 const UidReflexion: Record<string, string> = {};
+
+export async function list<T>(collectionName: string) {
+  const collectionSnapshot = await db.collection(collectionName).get();
+  const collectionData: T[] = [];
+  collectionSnapshot.forEach(e => {
+    collectionData.push({ ...e.data(), id: e.id } as T);
+  });
+  return collectionData;
+}
 
 export async function getDocumentId(uid: number | string) {
   const cachedId = UidReflexion[`${uid}`];
@@ -115,7 +126,14 @@ export async function getCachedCard(id: number | string) {
   if (doc.exists) {
     return doc.data();
   }
-  const res = await axios.get(`http://starlight.kirara.ca/api/v1/card_t/${id}`);
+  const res = await axios.get(
+    `http://starlight.kirara.ca/api/v1/card_t/${id}`,
+    {
+      headers: {
+        'User-Agent': UA,
+      },
+    },
+  );
   const card = res.data?.result?.[0];
   if (card) {
     await docRef.set(card);
@@ -128,7 +146,12 @@ export async function getImageUrl(link: string, ref: string) {
   const imageRef = bucket.file(ref);
   const exist = await imageRef.exists();
   if (!exist?.[0]) {
-    const imageBuffer = await axios.get(link, { responseType: 'arraybuffer' });
+    const imageBuffer = await axios.get(link, {
+      responseType: 'arraybuffer',
+      headers: {
+        'User-Agent': UA,
+      },
+    });
     await imageRef.save(Buffer.from(imageBuffer.data, 'binary'));
   }
   return await getDownloadURL(imageRef);

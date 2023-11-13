@@ -48,6 +48,7 @@ interface CGSSGachaResult {
   name_only: string;
   card_image_ref: string | null;
   icon_image_ref: string | null;
+  spread_image_ref: string | null;
   rarity: string;
 }
 

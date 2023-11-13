@@ -1,3 +1,4 @@
+import { type InputMedia } from 'node-telegram-bot-api';
 import {
   drawComplex,
   productionSummary,
@@ -19,7 +20,9 @@ export const theaterHandler: MessageHandler = async (bot, info) => {
     );
     await bot.sendMessage(
       chatId,
-      `${nickname}共抽了${production.total}次，其中${summary.join('，')}`,
+      `${nickname}共抽了${production.total}次，其中${summary.join(
+        '，',
+      )}\n${nickname}有${production.pieces}个星星碎片。`,
       {
         reply_to_message_id: message_id,
         reply_markup: {
@@ -49,21 +52,39 @@ export const gachaHandler: MessageHandler = async (bot, info) => {
   const { chatId, message_id, nickname, uid, first_name, last_name } = info;
   try {
     const result = await drawComplex(`${uid}`);
-    const { results, imageUrl, freeGacha, newBalance } = result;
+    const { results, cardImageUrls, freeGacha, newBalance } = result;
     const cardList = results.map(
       ({ rarity, title, name_only }) =>
         `${rarity.toLocaleUpperCase()} ${
           title ? `[${title}]` : ''
         } ${name_only}`,
     );
-    await bot.sendPhoto(chatId, imageUrl, {
-      reply_to_message_id: message_id,
-      caption: `${nickname}抽到了：\n${cardList.join('\n')}\n${
-        freeGacha
-          ? `这是${nickname}今天的首次免费抽卡`
-          : `${nickname}消耗了2500石头，还剩${newBalance}石头`
-      }`,
-    });
+    if (cardImageUrls.length > 1) {
+      const inputMedia: InputMedia[] = cardImageUrls.map((e, index) => ({
+        type: 'photo',
+        media: e,
+        caption:
+          index === 0
+            ? `${nickname}抽到了：\n${cardList.join('\n')}\n\n${
+                freeGacha
+                  ? `这是${nickname}今天的首次免费抽卡`
+                  : `${nickname}消耗了2500石头，还剩${newBalance}石头`
+              }`
+            : undefined,
+      }));
+      await bot.sendMediaGroup(chatId, inputMedia, {
+        reply_to_message_id: message_id,
+      });
+    } else {
+      await bot.sendPhoto(chatId, cardImageUrls[0], {
+        reply_to_message_id: message_id,
+        caption: `${nickname}抽到了：\n${cardList.join('\n')}\n\n${
+          freeGacha
+            ? `这是${nickname}今天的首次免费抽卡`
+            : `${nickname}消耗了2500石头，还剩${newBalance}石头`
+        }`,
+      });
+    }
     return logger.info(
       `${uid} - ${first_name} ${last_name ?? ''} drawed 10 cards.`,
     );
@@ -87,17 +108,31 @@ export const simulationHandler: MessageHandler = async (bot, info) => {
 
   try {
     const result = await pickTenCards(`${uid}`);
-    const { results, imageUrl } = result;
+    const { results, cardImageUrls } = result;
     const cardList = results.map(
       ({ rarity, title, name_only }) =>
         `${rarity.toLocaleUpperCase()} ${
           title ? `[${title}]` : ''
         } ${name_only}`,
     );
-    await bot.sendPhoto(chatId, imageUrl, {
-      reply_to_message_id: message_id,
-      caption: `${nickname}抽到了：\n${cardList.join('\n')}`,
-    });
+    if (cardImageUrls.length > 1) {
+      const inputMedia: InputMedia[] = cardImageUrls.map((e, index) => ({
+        type: 'photo',
+        media: e,
+        caption:
+          index === 0
+            ? `${nickname}抽到了：\n${cardList.join('\n')}`
+            : undefined,
+      }));
+      await bot.sendMediaGroup(chatId, inputMedia, {
+        reply_to_message_id: message_id,
+      });
+    } else {
+      await bot.sendPhoto(chatId, cardImageUrls[0], {
+        reply_to_message_id: message_id,
+        caption: `${nickname}抽到了：\n${cardList.join('\n')}`,
+      });
+    }
     return logger.info(
       `${uid} - ${first_name} ${last_name ?? ''} casually drawed 10 cards.`,
     );
