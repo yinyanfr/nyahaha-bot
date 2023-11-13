@@ -55,7 +55,7 @@ export async function drawComplex(uid: string) {
   if (!freeGacha && newBalance < 2500) {
     throw new Error(ERROR_CODE.NOT_ENOUGH_STONES);
   }
-  const cards = await pickTenCards(id, 15 * 1000);
+  const cards = await pickTenCards(id, 10 * 1000);
   await saveGachaResult(uid, await cards.results);
   if (freeGacha) {
     await setUserData(id, { lastGachaDate: now.toISOString() });

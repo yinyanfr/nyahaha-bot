@@ -12,7 +12,7 @@ export interface MessageInfo {
   nickname: string;
 }
 
-export type MessageHandler<MessageProps extends Record<string, any>> = (
+export type MessageHandler<MessageProps = void> = (
   bot: TelegramBot,
   info: MessageInfo,
   props?: MessageProps,
