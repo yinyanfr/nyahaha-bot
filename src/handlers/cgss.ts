@@ -1,4 +1,4 @@
-import { type InputMedia } from 'node-telegram-bot-api';
+import { type Message, type InputMedia } from 'node-telegram-bot-api';
 import {
   drawComplex,
   productionSummary,
@@ -59,6 +59,7 @@ export const gachaHandler: MessageHandler = async (bot, info) => {
           title ? `[${title}]` : ''
         } ${name_only}`,
     );
+    let message: Message;
     if (cardImageUrls.length > 1) {
       const inputMedia: InputMedia[] = cardImageUrls.map((e, index) => ({
         type: 'photo',
@@ -72,11 +73,11 @@ export const gachaHandler: MessageHandler = async (bot, info) => {
               }`
             : undefined,
       }));
-      await bot.sendMediaGroup(chatId, inputMedia, {
+      message = await bot.sendMediaGroup(chatId, inputMedia, {
         reply_to_message_id: message_id,
       });
     } else {
-      await bot.sendPhoto(chatId, cardImageUrls[0], {
+      message = await bot.sendPhoto(chatId, cardImageUrls[0], {
         reply_to_message_id: message_id,
         caption: `${nickname}抽到了：\n${cardList.join('\n')}\n\n${
           freeGacha
@@ -85,6 +86,12 @@ export const gachaHandler: MessageHandler = async (bot, info) => {
         }`,
       });
     }
+    setTimeout(
+      () => {
+        bot.deleteMessage(chatId, message.message_id);
+      },
+      1000 * 60 * 60 * 24,
+    );
     return logger.info(
       `${uid} - ${first_name} ${last_name ?? ''} drawed 10 cards.`,
     );
@@ -115,6 +122,7 @@ export const simulationHandler: MessageHandler = async (bot, info) => {
           title ? `[${title}]` : ''
         } ${name_only}`,
     );
+    let message: Message;
     if (cardImageUrls.length > 1) {
       const inputMedia: InputMedia[] = cardImageUrls.map((e, index) => ({
         type: 'photo',
@@ -124,15 +132,21 @@ export const simulationHandler: MessageHandler = async (bot, info) => {
             ? `${nickname}抽到了：\n${cardList.join('\n')}`
             : undefined,
       }));
-      await bot.sendMediaGroup(chatId, inputMedia, {
+      message = await bot.sendMediaGroup(chatId, inputMedia, {
         reply_to_message_id: message_id,
       });
     } else {
-      await bot.sendPhoto(chatId, cardImageUrls[0], {
+      message = await bot.sendPhoto(chatId, cardImageUrls[0], {
         reply_to_message_id: message_id,
         caption: `${nickname}抽到了：\n${cardList.join('\n')}`,
       });
     }
+    setTimeout(
+      () => {
+        bot.deleteMessage(chatId, message.message_id);
+      },
+      1000 * 60 * 60 * 24,
+    );
     return logger.info(
       `${uid} - ${first_name} ${last_name ?? ''} casually drawed 10 cards.`,
     );
