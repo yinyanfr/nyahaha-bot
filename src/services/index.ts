@@ -9,7 +9,7 @@ import { Radio } from '../features';
 import dayjs from 'dayjs';
 // import configs from '../configs';
 
-const UA = 'NyahahaBot/0.0.12';
+const UA = 'NyahahaBot/0.0.13';
 
 initializeApp({
   credential: cert(serviceAccount as ServiceAccount),

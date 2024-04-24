@@ -22,6 +22,7 @@ import {
   pickSticker,
   type MessageInfo,
   CALLBACK_CODE,
+  shouldBotRespond,
 } from './lib';
 import TelegramBot from 'node-telegram-bot-api';
 import { getUserDataByUid, registerObservers } from './services';
@@ -74,7 +75,7 @@ bot.on('message', async msg => {
 
   await morningHander(bot, info);
 
-  if (type === 'private' || text.match(/@nyahaha_bot/) || text.match(/^\//)) {
+  if (shouldBotRespond(type, text)) {
     const args = parseArgs(text.replace(/ *@nyahaha_bot */, ''));
     // console.log(args);
 
