@@ -76,7 +76,7 @@ bot.on('message', async msg => {
   await morningHander(bot, info);
 
   if (shouldBotRespond(type, text)) {
-    const args = parseArgs(text.replace(/ *@nyahaha_bot */, ''));
+    const args = parseArgs(text.replace(/ *@nyahaha_bot */, ' '));
     // console.log(args);
 
     try {
