@@ -158,7 +158,7 @@ export function shouldBotRespond(type: ChatType, text: string): boolean {
     if (text.match(/@nyahaha_bot/)) {
       return true;
     }
-    if (!text.match(/@[A-Za-z0-9_-]+bot/)) {
+    if (!text.match(/@[A-Za-z0-9_-]+[bB][oO][tT]/)) {
       return true;
     }
   }
