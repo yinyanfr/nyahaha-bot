@@ -8,6 +8,7 @@ import { type ChatType } from 'node-telegram-bot-api';
 
 export * from './types';
 export * from './budgets';
+export * from './gakumas';
 
 export enum ERROR_CODE {
   BONUS_ALREADY_GOT = 'BONUS_ALREADY_GOT',
