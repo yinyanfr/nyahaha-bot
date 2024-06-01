@@ -19,7 +19,7 @@ function calculatePointByLine(line: number) {
 export function calculateGakumasPoints(status: number[]) {
   const winnerStatus = status.map(e => Math.min(1500, e + 30));
   const stageTotal = Math.floor(
-    (winnerStatus.reduce((prev, current) => prev + current) * 23) / 10,
+    winnerStatus.reduce((prev, current) => prev + current) * 2.3,
   );
   const [S, APlus, A] = [13000, 11500, 10000].map(e =>
     Math.ceil(calculatePointByLine(e - 1700 - stageTotal)),
