@@ -15,6 +15,7 @@ import {
   callmeHandler,
   helpHandler,
   morningHander,
+  gakumasCalcHandler,
 } from './handlers';
 import {
   logger,
@@ -81,6 +82,16 @@ bot.on('message', async msg => {
 
     try {
       if (args?.length) {
+        console.log(args);
+        if (
+          args.length === 3 &&
+          args.every(arg => arg.match(/^([0-9]){2,4}$/))
+        ) {
+          return await gakumasCalcHandler(bot, info, {
+            status: args.map(arg => parseInt(arg)),
+          });
+        }
+
         if (convertCC(args[0]).match(/(唱歌|sing)/)) {
           const query = args[1]?.length ? convertCC(args[1]) : undefined;
           return await singHandler(bot, info, { query });
