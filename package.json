@@ -4,8 +4,8 @@
   "description": "The code base for a personal bot.",
   "main": "dist/index.js",
   "scripts": {
-    "start": "NODE_ENV=development ts-node src/index.ts",
-    "start:server": "NODE_ENV=development ts-node src/server.ts",
+    "start": "NODE_ENV=development tsx src/index.ts",
+    "start:server": "NODE_ENV=development tsx src/server.ts",
     "lint": "eslint --ext .ts,.tsx ./src",
     "build": "npm run lint && tsc",
     "clean": "rm -rf dist/",
@@ -39,7 +39,7 @@
     "husky": "^8.0.0",
     "lint-staged": "^14.0.1",
     "prettier": "^3.0.3",
-    "ts-node": "^10.9.1",
+    "tsx": "^4.19.0",
     "typescript": "^5.2.2"
   },
   "dependencies": {

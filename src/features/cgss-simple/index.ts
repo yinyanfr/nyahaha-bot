@@ -27,11 +27,12 @@ function groupCardByRarity(cards: CardInfo[]) {
   const ssr: CardInfo[] = [];
 
   cards.forEach(e => {
-    if (e.rarity_dep.rarity === 3) {
+    //TODO: API endpoint did not return rarity_dep.rarity for upgraded cards
+    if (e.rarity_dep.rarity === 3 || e.rarity_dep.rarity === 4) {
       r.push(e);
-    } else if (e.rarity_dep.rarity === 5) {
+    } else if (e.rarity_dep.rarity === 5 || e.rarity_dep.rarity === 6) {
       sr.push(e);
-    } else if (e.rarity_dep.rarity === 7) {
+    } else if (e.rarity_dep.rarity === 7 || e.rarity_dep.rarity === 8) {
       ssr.push(e);
     }
   });
