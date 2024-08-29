@@ -224,7 +224,10 @@ export const timezoneHandler: MessageHandler<TimezoneProps> = async (
     info;
   const { timezone } = props ?? {};
   try {
-    if (!timezone?.match(/^[+-]?[0-9][0-9]?$/)) {
+    if (
+      !timezone?.match(/^[+-]?[0-9][0-9]?$/) ||
+      Math.abs(parseInt(timezone)) > 12
+    ) {
       throw new Error(ERROR_CODE.INVALID_INPUT);
     }
     if (userdata.id) {
@@ -248,7 +251,7 @@ export const timezoneHandler: MessageHandler<TimezoneProps> = async (
     const errorMessage = (error as Error)?.message ?? error ?? '未知错误';
     let message = errorMessage;
     if (errorMessage === ERROR_CODE.INVALID_INPUT) {
-      message = `请以 +-数字 的格式输入时区，如 +8，-6`;
+      message = `请以正负整数的格式输入时区，如 8，-6，时区范围为 -12 到 12。`;
     }
     await bot.sendMessage(chatId, message, {
       reply_to_message_id: message_id,
