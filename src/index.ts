@@ -16,6 +16,7 @@ import {
   helpHandler,
   morningHander,
   gakumasCalcHandler,
+  aiHandler,
 } from './handlers';
 import {
   logger,
@@ -77,12 +78,14 @@ bot.on('message', async msg => {
   await morningHander(bot, info);
 
   if (shouldBotRespond(type, text)) {
-    const args = parseArgs(text.replace(/ *@nyahaha_bot */, ' '));
+    const args = parseArgs(
+      text.replace(/ *@nyahaha_bot */, ' ').replace(/^\//, ''),
+    );
     // console.log(args);
 
     try {
       if (args?.length) {
-        console.log(args);
+        // console.log(args);
         if (
           args.length === 3 &&
           args.every(arg => arg.match(/^([0-9]){2,4}$/))
@@ -92,50 +95,50 @@ bot.on('message', async msg => {
           });
         }
 
-        if (convertCC(args[0]).match(/(唱歌|sing)/)) {
+        if (convertCC(args[0]).match(/^(唱歌|sing)/)) {
           const query = args[1]?.length ? convertCC(args[1]) : undefined;
           return await singHandler(bot, info, { query });
         }
 
-        if (convertCC(args[0]).match(/(喜欢|love)/)) {
+        if (convertCC(args[0]).match(/^(喜欢|love)/)) {
           return await loveHandler(bot, info);
         }
 
-        if (convertCC(args[0]).match(/(晚安|nighty)/)) {
+        if (convertCC(args[0]).match(/^(晚安|nighty)/)) {
           return await nightyHandler(bot, info);
         }
 
-        if (convertCC(args[0]).match(/(事务所|theater|theatre)/)) {
+        if (convertCC(args[0]).match(/^(事务所|theater|theatre)/)) {
           return await theaterHandler(bot, info);
         }
 
-        if (convertCC(args[0]).match(/(抽卡|gacha)/)) {
+        if (convertCC(args[0]).match(/^(抽卡|gacha)/)) {
           return await gachaHandler(bot, info);
         }
 
-        if (convertCC(args[0]).match(/试水/)) {
+        if (convertCC(args[0]).match(/^试水/)) {
           return await simulationHandler(bot, info);
         }
 
-        if (convertCC(args[0]).match(/(签到|reward)/)) {
+        if (convertCC(args[0]).match(/^(签到|reward)/)) {
           return await rewardHandler(bot, info);
         }
 
-        if (convertCC(args[0]).match(/(石头|stone)/)) {
+        if (convertCC(args[0]).match(/^(石头|stone)/)) {
           return await stoneHandler(bot, info);
         }
 
-        if (convertCC(args[0]).match(/叫我/)) {
+        if (convertCC(args[0]).match(/^叫我/)) {
           const newNickname = args[1] ?? '大哥哥';
           return await callmeHandler(bot, info, { newNickname });
         }
 
-        if (convertCC(args[0]).match(/(时区|utc|gmt)/i)) {
+        if (convertCC(args[0]).match(/^(时区|utc|gmt)/i)) {
           const timezone = args[1];
           return await timezoneHandler(bot, info, { timezone });
         }
 
-        if (convertCC(args[0]).match(/(预算|budget)/i)) {
+        if (convertCC(args[0]).match(/^(预算|budget)/i)) {
           const budget = args[1];
           return await budgetHandler(bot, info, { budget });
         }
@@ -147,12 +150,16 @@ bot.on('message', async msg => {
           return await addExpenseHandler(bot, info, { amount, category });
         }
 
-        if (convertCC(args[0]).match(/(账本|账簿|多少钱|钱包|book|expense)/)) {
+        if (convertCC(args[0]).match(/^(账本|账簿|多少钱|钱包|book|expense)/)) {
           return await bookHandler(bot, info);
         }
 
-        if (convertCC(args[0]).match(/(帮助|help|start)/)) {
+        if (convertCC(args[0]).match(/^(帮助|help|start)/)) {
           return await helpHandler(bot, info);
+        }
+
+        if (`${chatId}` === `${configs.groupId}`) {
+          return await aiHandler(bot, info, { prompt: args.join(' ') });
         }
       }
 

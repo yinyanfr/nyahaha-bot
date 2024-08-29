@@ -5,6 +5,7 @@ import stickers from './miaohaha.json';
 import configs from '../configs';
 import dayjs from 'dayjs';
 import { type ChatType } from 'node-telegram-bot-api';
+import { marked } from 'marked';
 
 export * from './types';
 export * from './budgets';
@@ -18,6 +19,7 @@ export enum ERROR_CODE {
   INVALID_USER_ID = 'INVALID_USER_ID',
   INVALID_INPUT = 'INVALID_INPUT',
   NOT_FOUND = 'NOT_FOUND',
+  FORBIDDEN = 'FORBIDDEN',
 }
 
 export enum CALLBACK_CODE {
@@ -164,4 +166,42 @@ export function shouldBotRespond(type: ChatType, text: string): boolean {
     }
   }
   return false;
+}
+
+export function escapeMarkdown(text: string): string {
+  // List of Markdown reserved characters
+  const reservedCharacters = [
+    '\\',
+    '`',
+    '*',
+    '_',
+    '{',
+    '}',
+    '[',
+    ']',
+    '(',
+    ')',
+    '#',
+    '+',
+    '-',
+    '.',
+    '!',
+    '>',
+    '=',
+  ];
+
+  // Create a regular expression to match any of the reserved characters
+  const regex = new RegExp(
+    `[${reservedCharacters.map(c => `\\${c}`).join('')}]`,
+    'g',
+  );
+
+  // Replace each reserved character with its escaped version
+  return text.replace(regex, match => `\\${match}`);
+}
+
+export async function md2html(md: string) {
+  const escaped = escapeMarkdown(md);
+  const html = await marked.parse(escaped);
+  return html;
 }
