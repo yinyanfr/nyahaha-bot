@@ -17,8 +17,8 @@ export const aiHandler: MessageHandler<AiProps> = async (bot, info, props) => {
     if (!(`${chatId}` === `${configs.groupId}`)) {
       throw ERROR_CODE.FORBIDDEN;
     }
-    const aiResponse = await getAiResponse(prompt, uid, userdata);
-    await bot.sendMessage(chatId, aiResponse, {
+    const aiResponse = await getAiResponse(prompt, userdata);
+    await bot.sendMessage(chatId, aiResponse.content, {
       reply_to_message_id: message_id,
     });
     return logger.info(
@@ -31,7 +31,7 @@ export const aiHandler: MessageHandler<AiProps> = async (bot, info, props) => {
       message = `请提供一个问题或话题。`;
     }
     if (errorMessage === ERROR_CODE.FORBIDDEN) {
-      message = `抱歉，此功能目前尽显内部使用。`;
+      message = `抱歉，此功能目前仅限内部使用。`;
     }
     await bot.sendMessage(chatId, message, {
       reply_to_message_id: message_id,
