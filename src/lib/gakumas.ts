@@ -26,8 +26,32 @@ export function calculateGakumasPoints(status: number[]) {
   );
   return {
     stageTotal,
+    SPlus: 0,
     S,
     APlus,
     A,
   };
+}
+
+export function calculateGakumasPointsMaster(status: number[]) {
+  const winnerStatus = status.map(e => Math.min(1800, e + 30));
+  const stageTotal = Math.floor(
+    winnerStatus.reduce((prev, current) => prev + current) * 2.3,
+  );
+  const [SPlus, S, APlus] = [14500, 13000, 11500].map(e =>
+    Math.ceil(calculatePointByLine(e - 1700 - stageTotal)),
+  );
+  return {
+    stageTotal,
+    SPlus,
+    S,
+    APlus,
+    A: 0,
+  };
+}
+
+export function isMaster(status: number[]) {
+  const sum = status.reduce((prev, current) => prev + current);
+  const overflowed = status.some(e => e > 1500);
+  return overflowed || sum > 3700;
 }
