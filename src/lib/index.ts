@@ -206,3 +206,13 @@ export async function md2html(md: string) {
   const html = await marked.parse(escaped);
   return html;
 }
+
+export function isGakumasCall(args: string[]) {
+  const three =
+    args.length === 3 && args.every(arg => arg.match(/^([0-9]){2,4}$/));
+  const four =
+    args.length === 4 &&
+    args.slice(0, 3).every(arg => arg.match(/^([0-9]){2,4}$/)) &&
+    args[3] === 'master';
+  return three || four;
+}

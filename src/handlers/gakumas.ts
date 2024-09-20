@@ -1,26 +1,37 @@
 import {
   calculateGakumasPoints,
+  calculateGakumasPointsMaster,
   ERROR_CODE,
+  isMaster,
   logger,
   type MessageHandler,
 } from '../lib';
 
 interface GakumasCalcProps {
   status: number[];
+  master?: boolean;
 }
 
-function overflow(status: number) {
-  return status > 1470 ? `${status}(1470)` : status;
+function overflow(status: number, cap = 1470) {
+  return status > cap ? `${status}(${cap})` : status;
 }
 
-function overflowTotal(vo: number, da: number, vi: number) {
-  if (vo > 1470 || da > 1470 || vi > 1470) {
-    const actualVo = vo > 1470 ? 1470 : vo;
-    const actualDa = da > 1470 ? 1470 : da;
-    const actualVi = vi > 1470 ? 1470 : vi;
+function overflowTotal(vo: number, da: number, vi: number, cap = 1470) {
+  if (vo > cap || da > cap || vi > cap) {
+    const actualVo = vo > cap ? cap : vo;
+    const actualDa = da > cap ? cap : da;
+    const actualVi = vi > cap ? cap : vi;
     return `${vo + da + vi}(${actualVo + actualDa + actualVi})`;
   }
   return vo + da + vi;
+}
+
+function formatBorders(borders: Record<string, number | undefined>) {
+  return Object.entries(borders)
+    .filter(([, value]) => value !== undefined)
+    .map(([key, value]) => `${key.replace('Plus', '+')}: ${value}`)
+    .map((e, i) => (i % 2 === 0 ? e : `<b>${e}</b>`))
+    .join(' ');
 }
 
 export const gakumasCalcHandler: MessageHandler<GakumasCalcProps> = async (
@@ -30,21 +41,32 @@ export const gakumasCalcHandler: MessageHandler<GakumasCalcProps> = async (
 ) => {
   const { chatId, message_id, nickname, uid, first_name, last_name } = info;
   const { status } = props ?? {};
+
   try {
     if (!status?.length) {
       throw ERROR_CODE.INVALID_INPUT;
     }
-    const { stageTotal, S, APlus, A } = calculateGakumasPoints(status);
+    const master = props?.master ?? isMaster(status);
+    const { stageTotal, SPlus, S, APlus, A } = master
+      ? calculateGakumasPointsMaster(status)
+      : calculateGakumasPoints(status);
+    const borders = master ? { SPlus, S, APlus } : { S, APlus, A };
+    const cap = master ? 1770 : 1470;
+
     const [vo, da, vi] = status;
     await bot.sendMessage(
       chatId,
-      `${nickname}的三维为 vo. ${overflow(vo)}, da. ${overflow(
+      `${nickname}的三维为 vo. ${overflow(vo, cap)}, da. ${overflow(
         da,
-      )}, vi. ${overflow(vi)}，\n合计为<b>${overflowTotal(
+        cap,
+      )}, vi. ${overflow(vi, cap)}，\n合计为<b>${overflowTotal(
         vo,
         da,
         vi,
-      )} （${stageTotal}）</b>，要打到各个评价所需的分数分别为：\nS：${S}  <b>A+：${APlus}</b>  A：${A}`,
+        cap,
+      )}</b> （${stageTotal}），要打到各个评价所需的分数分别为：\n${formatBorders(
+        borders,
+      )}`,
       {
         reply_to_message_id: message_id,
         parse_mode: 'HTML',

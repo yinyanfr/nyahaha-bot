@@ -25,6 +25,7 @@ import {
   type MessageInfo,
   CALLBACK_CODE,
   shouldBotRespond,
+  isGakumasCall,
 } from './lib';
 import TelegramBot from 'node-telegram-bot-api';
 import { getUserDataByUid, registerObservers } from './services';
@@ -78,20 +79,17 @@ bot.on('message', async msg => {
   await morningHander(bot, info);
 
   if (shouldBotRespond(type, text)) {
-    const args = parseArgs(
-      text.replace(/ *@nyahaha_bot */, ' ').replace(/^\//, ''),
-    );
+    const rawText = text.replace(/ *@nyahaha_bot */, ' ').replace(/^\//, '');
+    const args = parseArgs(rawText);
     // console.log(args);
 
     try {
       if (args?.length) {
         // console.log(args);
-        if (
-          args.length === 3 &&
-          args.every(arg => arg.match(/^([0-9]){2,4}$/))
-        ) {
+        if (isGakumasCall(args)) {
           return await gakumasCalcHandler(bot, info, {
-            status: args.map(arg => parseInt(arg)),
+            status: args.slice(0, 3).map(arg => parseInt(arg)),
+            master: args[3] === 'master',
           });
         }
 
@@ -159,7 +157,7 @@ bot.on('message', async msg => {
         }
 
         if (`${chatId}` === `${configs.groupId}`) {
-          return await aiHandler(bot, info, { prompt: args.join(' ') });
+          return await aiHandler(bot, info, { prompt: rawText });
         }
       }
 
