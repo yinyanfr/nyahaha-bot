@@ -1,23 +1,67 @@
 import configs from '../configs';
-import { getAiResponse } from '../features';
+import {
+  geminiResponse,
+  resetGemini,
+  openAiResponse,
+  resetOpenAi,
+} from '../features';
 import { ERROR_CODE, logger, type MessageHandler } from '../lib';
 
 interface AiProps {
-  prompt: string;
+  prompt?: string;
+  action?: 'reset' | 'change';
 }
+
+type AiProvider = 'gemini' | 'openai';
+
+const getAiResponse = {
+  gemini: geminiResponse,
+  openai: openAiResponse,
+};
+
+const resetAi = {
+  gemini: resetGemini,
+  openai: resetOpenAi,
+};
+
+let provider: AiProvider = 'gemini';
 
 export const aiHandler: MessageHandler<AiProps> = async (bot, info, props) => {
   const { userdata, chatId, message_id, uid, first_name, last_name } = info;
-  const { prompt } = props ?? {};
+  const { prompt, action } = props ?? {};
 
   try {
+    if (action === 'reset') {
+      resetAi[provider]();
+      await bot.sendMessage(chatId, `聊天已初始化。`, {
+        reply_to_message_id: message_id,
+      });
+      return logger.info(
+        `${uid} - ${first_name} ${last_name ?? ''} has reset ${provider}.`,
+      );
+    }
+
+    if (action === 'change') {
+      if (provider === 'gemini') {
+        provider = 'openai';
+      } else {
+        provider = 'gemini';
+      }
+      await bot.sendMessage(chatId, `已切换至${provider}。`, {
+        reply_to_message_id: message_id,
+      });
+      return logger.info(
+        `${uid} - ${first_name} ${last_name ?? ''} has changed to ${provider}.`,
+      );
+    }
+
     if (!prompt) {
       throw ERROR_CODE.INVALID_INPUT;
     }
     if (!(`${chatId}` === `${configs.groupId}`)) {
       throw ERROR_CODE.FORBIDDEN;
     }
-    const aiResponse = await getAiResponse(prompt, userdata);
+    const aiResponse = await getAiResponse[provider](prompt, userdata);
     await bot.sendMessage(chatId, aiResponse.content, {
       reply_to_message_id: message_id,
     });
