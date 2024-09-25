@@ -157,6 +157,16 @@ bot.on('message', async msg => {
         }
 
         if (`${chatId}` === `${configs.groupId}`) {
+          if (convertCC(rawText).match(/^(reset|重启)/)) {
+            return await aiHandler(bot, info, {
+              action: 'reset',
+            });
+          }
+          if (convertCC(rawText).match(/^(change|换人|切换|更换)/)) {
+            return await aiHandler(bot, info, {
+              action: 'change',
+            });
+          }
           return await aiHandler(bot, info, { prompt: rawText });
         }
       }

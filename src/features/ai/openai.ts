@@ -2,6 +2,7 @@ import OpenAI from 'openai';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { ERROR_CODE } from '../../lib';
+import configs from '../../configs';
 
 interface OpenAIMsg {
   role: 'system' | 'user' | 'assistant';
@@ -23,7 +24,7 @@ function getMsgHistory(): OpenAIMsg[] {
   return [{ role: 'system', content: prompt }, ...msgHistory];
 }
 
-const openai = new OpenAI();
+const openai = new OpenAI({ apiKey: configs.openAiKey });
 
 async function isContentFlagged(content: string) {
   const moderation = await openai.moderations.create({ input: content });
@@ -70,4 +71,8 @@ export async function getAiResponse(
       }`,
     };
   }
+}
+
+export function resetAi() {
+  msgHistory.length = 0;
 }

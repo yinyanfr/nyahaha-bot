@@ -68,3 +68,7 @@ export async function getAiResponse(
     };
   }
 }
+
+export function resetAi() {
+  chat = createChat();
+}
