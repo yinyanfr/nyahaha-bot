@@ -42,7 +42,7 @@ function groupCardByRarity(cards: CardInfo[]) {
 
 const grouped = groupCardByRarity(allCards.result as CardInfo[]);
 
-const Reqlist: Record<string, Date> = {};
+const Reqlist: Record<string, Date> = Object.create(null);
 
 export async function pickCard(mustSr?: boolean): Promise<CGSSGachaResult> {
   const rand = Math.abs(Math.random());
