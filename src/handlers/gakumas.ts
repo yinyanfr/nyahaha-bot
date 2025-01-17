@@ -47,10 +47,10 @@ export const gakumasCalcHandler: MessageHandler<GakumasCalcProps> = async (
       throw ERROR_CODE.INVALID_INPUT;
     }
     const master = props?.master || isMaster(status);
-    const { stageTotal, SPlus, S, APlus, A } = master
+    const { stageTotal, SS, SPlus, S, APlus, A } = master
       ? calculateGakumasPointsMaster(status)
       : calculateGakumasPoints(status);
-    const borders = master ? { SPlus, S, APlus } : { S, APlus, A };
+    const borders = master ? { SS, SPlus, S, APlus } : { S, APlus, A };
     const cap = master ? 1770 : 1470;
 
     const [vo, da, vi] = status;

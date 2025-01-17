@@ -26,6 +26,7 @@ export function calculateGakumasPoints(status: number[]) {
   );
   return {
     stageTotal,
+    SS: 0,
     SPlus: 0,
     S,
     APlus,
@@ -38,11 +39,12 @@ export function calculateGakumasPointsMaster(status: number[]) {
   const stageTotal = Math.floor(
     winnerStatus.reduce((prev, current) => prev + current) * 2.3,
   );
-  const [SPlus, S, APlus] = [14500, 13000, 11500].map(e =>
+  const [SS, SPlus, S, APlus] = [16000, 14500, 13000, 11500].map(e =>
     Math.ceil(calculatePointByLine(e - 1700 - stageTotal)),
   );
   return {
     stageTotal,
+    SS,
     SPlus,
     S,
     APlus,

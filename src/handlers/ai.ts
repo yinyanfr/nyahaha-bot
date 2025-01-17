@@ -24,7 +24,7 @@ const resetAi = {
   openai: resetOpenAi,
 };
 
-let provider: AiProvider = 'gemini';
+let provider: AiProvider = 'openai';
 
 export const aiHandler: MessageHandler<AiProps> = async (bot, info, props) => {
   const { userdata, chatId, message_id, uid, first_name, last_name } = info;

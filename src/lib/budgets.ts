@@ -42,7 +42,7 @@ export function formatSimpleBudget(
 
 function analyseExpensesComplex(expenses: Expense[]) {
   const total = expenses.map(e => e.amount).reduce((a, b) => a + b, 0);
-  const categorized: Record<string, number> = {};
+  const categorized: Record<string, number> = { __proto__: null as any };
   expenses.forEach(({ category, amount }) => {
     if (categorized[category]) {
       categorized[category] += amount;
