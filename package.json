@@ -1,6 +1,6 @@
 {
   "name": "nyahaha-bot",
-  "version": "0.0.18",
+  "version": "0.0.19",
   "description": "The code base for a personal bot.",
   "main": "dist/index.js",
   "scripts": {
@@ -55,7 +55,7 @@
     "join-images": "^1.1.5",
     "marked": "^14.1.0",
     "node-telegram-bot-api": "^0.63.0",
-    "openai": "^4.57.0",
+    "openai": "^4.95.1",
     "opencc-js": "^1.0.5",
     "prompts": "^2.4.2",
     "sharp": "^0.32.6",
