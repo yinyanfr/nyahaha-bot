@@ -29,10 +29,10 @@ const openai = new OpenAI({
   apiKey: configs.deepSeekKey,
 });
 
-async function isContentFlagged(content: string) {
-  const moderation = await openai.moderations.create({ input: content });
-  return moderation.results?.[0]?.flagged;
-}
+// async function isContentFlagged(content: string) {
+//   const moderation = await openai.moderations.create({ input: content });
+//   return moderation.results?.[0]?.flagged;
+// }
 
 export async function getAiResponse(
   prompt: string,
@@ -55,13 +55,11 @@ export async function getAiResponse(
 
     const msg = completion.choices?.[0]?.message;
     if (msg.role === 'assistant' && msg?.content) {
-      const flagged = await isContentFlagged(msg.content);
+      // const flagged = await isContentFlagged(msg.content);
       registerMsg(msg);
       return {
-        content: flagged
-          ? `此回复可能包含不安全内容：\n\n${msg.content}`
-          : msg.content,
-        flagged,
+        content: msg.content,
+        flagged: false,
       };
     }
     throw ERROR_CODE.NOT_FOUND;
