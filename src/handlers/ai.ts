@@ -4,6 +4,8 @@ import {
   resetGemini,
   openAiResponse,
   resetOpenAi,
+  deepSeekResponse,
+  resetDeepSeek,
 } from '../features';
 import { ERROR_CODE, logger, type MessageHandler } from '../lib';
 
@@ -12,16 +14,18 @@ interface AiProps {
   action?: 'reset' | 'change';
 }
 
-type AiProvider = 'gemini' | 'openai';
+type AiProvider = 'gemini' | 'openai' | 'deepseek';
 
 const getAiResponse = {
   gemini: geminiResponse,
   openai: openAiResponse,
+  deepseek: deepSeekResponse,
 };
 
 const resetAi = {
   gemini: resetGemini,
   openai: resetOpenAi,
+  deepseek: resetDeepSeek,
 };
 
 let provider: AiProvider = 'openai';
@@ -42,10 +46,10 @@ export const aiHandler: MessageHandler<AiProps> = async (bot, info, props) => {
     }
 
     if (action === 'change') {
-      if (provider === 'gemini') {
+      if (provider === 'deepseek') {
         provider = 'openai';
       } else {
-        provider = 'gemini';
+        provider = 'deepseek';
       }
       await bot.sendMessage(chatId, `已切换至${provider}。`, {
         reply_to_message_id: message_id,
