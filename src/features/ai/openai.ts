@@ -26,10 +26,10 @@ function getMsgHistory(): OpenAIMsg[] {
 
 const openai = new OpenAI({ apiKey: configs.openAiKey });
 
-async function isContentFlagged(content: string) {
-  const moderation = await openai.moderations.create({ input: content });
-  return moderation.results?.[0]?.flagged;
-}
+// async function isContentFlagged(content: string) {
+//   const moderation = await openai.moderations.create({ input: content });
+//   return moderation.results?.[0]?.flagged;
+// }
 
 export async function getAiResponse(
   prompt: string,
@@ -52,7 +52,8 @@ export async function getAiResponse(
 
     const msg = completion.choices?.[0]?.message;
     if (msg.role === 'assistant' && msg?.content) {
-      const flagged = await isContentFlagged(msg.content);
+      // const flagged = await isContentFlagged(msg.content);
+      const flagged = false;
       registerMsg(msg);
       return {
         content: flagged

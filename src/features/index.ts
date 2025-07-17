@@ -11,5 +11,7 @@ export {
   resetOpenAi,
   deepSeekResponse,
   resetDeepSeek,
+  sonarResponse,
+  resetSonar,
 } from './ai';
 export { connect, getStatus } from './rcon';
