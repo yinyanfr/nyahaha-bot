@@ -12,3 +12,4 @@ export {
   deepSeekResponse,
   resetDeepSeek,
 } from './ai';
+export { connect, getStatus } from './rcon';

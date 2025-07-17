@@ -17,6 +17,7 @@ import {
   morningHander,
   gakumasCalcHandler,
   aiHandler,
+  rconHandler,
 } from './handlers';
 import {
   logger,
@@ -158,7 +159,12 @@ bot.on('message', async msg => {
           return await helpHandler(bot, info);
         }
 
+        // Exlusive Features
         if (`${chatId}` === `${configs.groupId}`) {
+          if (args[0] === 'cs2') {
+            return await rconHandler(bot, info, { command: args[1] });
+          }
+
           if (convertCC(rawText).match(/^(reset|重启)/)) {
             return await aiHandler(bot, info, {
               action: 'reset',
