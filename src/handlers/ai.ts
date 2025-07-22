@@ -6,6 +6,8 @@ import {
   resetOpenAi,
   deepSeekResponse,
   resetDeepSeek,
+  sonarResponse,
+  resetSonar,
 } from '../features';
 import { ERROR_CODE, logger, type MessageHandler } from '../lib';
 
@@ -14,21 +16,26 @@ interface AiProps {
   action?: 'reset' | 'change';
 }
 
-type AiProvider = 'gemini' | 'openai' | 'deepseek';
+type AiProvider = 'gemini' | 'openai' | 'deepseek' | 'sonar';
 
 const getAiResponse = {
   gemini: geminiResponse,
   openai: openAiResponse,
   deepseek: deepSeekResponse,
+  sonar: sonarResponse,
 };
 
 const resetAi = {
   gemini: resetGemini,
   openai: resetOpenAi,
   deepseek: resetDeepSeek,
+  sonar: resetSonar,
 };
 
-let provider: AiProvider = 'openai';
+const PrimaryProvider = 'sonar';
+const SecondaryProvider = 'deepseek';
+
+let provider: AiProvider = PrimaryProvider;
 
 export const aiHandler: MessageHandler<AiProps> = async (bot, info, props) => {
   const { userdata, chatId, message_id, uid, first_name, last_name } = info;
@@ -46,10 +53,10 @@ export const aiHandler: MessageHandler<AiProps> = async (bot, info, props) => {
     }
 
     if (action === 'change') {
-      if (provider === 'deepseek') {
-        provider = 'openai';
+      if (provider === SecondaryProvider) {
+        provider = PrimaryProvider;
       } else {
-        provider = 'deepseek';
+        provider = SecondaryProvider;
       }
       await bot.sendMessage(chatId, `已切换至${provider}。`, {
         reply_to_message_id: message_id,

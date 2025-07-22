@@ -14,3 +14,5 @@ export {
   getAiResponse as deepSeekResponse,
   resetAi as resetDeepSeek,
 } from './deepseek';
+
+export { getAiResponse as sonarResponse, resetAi as resetSonar } from './sonar';
