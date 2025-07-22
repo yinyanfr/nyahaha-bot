@@ -1,8 +1,8 @@
 import configs from '../configs';
 import { getStatus } from '../features';
-import { changeAliasOrMap } from '../features/rcon';
+import { changeAliasOrMap, connect, restartCS2 } from '../features/rcon';
 import { AcceptedAlias, MapPool } from '../features/rcon/lib';
-import { ERROR_CODE, logger, MessageHandler } from '../lib';
+import { ERROR_CODE, logger, MessageHandler, sleep } from '../lib';
 
 interface RconProps {
   command?: string;
@@ -20,11 +20,11 @@ export const rconHandler: MessageHandler<RconProps> = async (
   const { command } = props ?? {};
   if (!command) {
     const status = await getStatus();
-    const { connected, gameAlias, map } = status;
+    const { connected, gameAlias, map, players } = status;
     if (connected) {
       await bot.sendMessage(
         chatId,
-        `服务器正在运行，模式：${gameAlias}，地图：${map}`,
+        `服务器正在运行，模式：${gameAlias}，地图：${map}，服务器中当前有${players}位玩家。`,
       );
     } else {
       await bot.sendMessage(chatId, `服务器挂惹`);
@@ -34,6 +34,45 @@ export const rconHandler: MessageHandler<RconProps> = async (
       `${uid} - ${first_name} ${last_name ?? ''} has checked the server data.`,
     );
   } else {
+    if (command === '重启' || command === 'restart') {
+      await bot.sendMessage(chatId, `开始尝试重启服务器，请稍等。`);
+      try {
+        const res = await restartCS2();
+        if (res.status !== 200) {
+          throw res.data;
+        } else {
+          await bot.sendMessage(
+            chatId,
+            `服务器已成功重启，可能需要等到3-5分钟（需要更新的情况时间更长），请耐心等待。`,
+          );
+          for (let retry = 0; retry < 5; retry++) {
+            await sleep(2 * 60 * 1000);
+            await connect().catch(err => {
+              console.log(err);
+            });
+            const status = await getStatus();
+            const { connected, gameAlias, map, players } = status;
+            if (connected) {
+              await bot.sendMessage(
+                chatId,
+                `服务器正在运行，模式：${gameAlias}，地图：${map}，服务器中当前有${players}位玩家。`,
+              );
+            } else {
+              await bot.sendMessage(chatId, `服务器准备中，2分钟后重新查询。`);
+            }
+          }
+        }
+        return logger.info(
+          `${uid} - ${first_name} ${last_name ?? ''} restarted cs2 server.`,
+        );
+      } catch (err) {
+        await bot.sendMessage(chatId, `出错了：${err}`);
+        return logger.info(
+          `${uid} - ${first_name} ${last_name ?? ''} wanted to restart cs2 server, but has failed to ${err}.`,
+        );
+      }
+    }
+
     try {
       await changeAliasOrMap(command);
       await bot.sendMessage(

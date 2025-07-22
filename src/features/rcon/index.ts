@@ -2,8 +2,9 @@ import { cs2 } from '../../configs';
 import Rcon from 'rcon-srcds';
 import { AcceptedAlias, getAlias, MapPool, parseAlias } from './lib';
 import { ERROR_CODE, logger, slowdownOver } from '../../lib';
+import axios from 'axios';
 
-const { host, port, password } = cs2;
+const { host, port, password, apiServer, secret } = cs2;
 
 const options = {
   host, // Host
@@ -19,6 +20,7 @@ const status = {
   connected: false,
   gameAlias: 'deathmatch',
   map: 'de_mirage',
+  players: 0,
   lastModified: new Date(),
 };
 
@@ -47,6 +49,8 @@ export async function getStatus() {
       if (map) {
         status.map = map;
       }
+      const players = statusData?.server?.clients_human;
+      status.players = players || 0;
     } else throw ERROR_CODE.OUT_OF_SERVICE;
     const rawAlias = await cs2Server.execute('game_alias');
     if (rawAlias) {
@@ -87,6 +91,33 @@ export async function changeAliasOrMap(name: string) {
     throw ERROR_CODE.SLOWDOWN;
   }
 
-  console.log(`${baseCommand} ${name}`);
   await cs2Server.execute(`${baseCommand} ${name}`);
+}
+
+export async function restartCS2() {
+  if (!cs2Server.isAuthenticated()) {
+    try {
+      await connect();
+    } catch {
+      status.connected = false;
+      throw ERROR_CODE.OUT_OF_SERVICE;
+    }
+  }
+
+  const now = new Date();
+  if (!slowdownOver(now, status.lastModified, Cooldown)) {
+    throw ERROR_CODE.SLOWDOWN;
+  }
+
+  await cs2Server.disconnect();
+  const res = await axios.post(
+    `${apiServer}/restartcs2`,
+    {},
+    {
+      headers: {
+        'x-secret': secret,
+      },
+    },
+  );
+  return res;
 }

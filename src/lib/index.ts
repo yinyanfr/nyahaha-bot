@@ -221,3 +221,9 @@ export function isGakumasCall(args: string[]) {
     args[3] === 'master';
   return three || four;
 }
+
+export function sleep(time = 500) {
+  return new Promise(resolve => {
+    setTimeout(() => resolve(undefined), time);
+  });
+}
