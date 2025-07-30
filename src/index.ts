@@ -17,7 +17,7 @@ import {
   morningHander,
   gakumasCalcHandler,
   aiHandler,
-  rconHandler,
+  // rconHandler,
 } from './handlers';
 import {
   logger,
@@ -162,7 +162,8 @@ bot.on('message', async msg => {
         // Exlusive Features
         if (`${chatId}` === `${configs.groupId}`) {
           if (args[0] === 'cs2') {
-            return await rconHandler(bot, info, { command: args[1] });
+            // return await rconHandler(bot, info, { command: args[1] });
+            return 0; // ignored
           }
 
           if (convertCC(rawText).match(/^(reset|重启)/)) {
